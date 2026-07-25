@@ -373,16 +373,20 @@
       card.dataset.variantId = v.id;
 
       card.innerHTML =
-        `<div class="variant-card-body">` +
-          `<span class="variant-card-code">${escHtml(code)}</span>` +
-          `<span class="variant-card-cat">${escHtml(cat.name)}</span>` +
+        `<div class="variant-card-top">` +
+          `<div class="variant-card-left">` +
+            `<span class="variant-card-code">${escHtml(code)}</span>` +
+            `<span class="variant-card-cat">${escHtml(cat.name)}</span>` +
+          `</div>` +
+          `<div class="variant-card-actions">` +
+            `<button class="btn--add btn--counter-plus" data-category-id="${categoryId}" data-variant-id="${v.id}" data-type="${currentType}" aria-label="Dodaj">+</button>` +
+            (qty > 0
+              ? `<button class="btn--subtract btn--counter-minus" data-category-id="${categoryId}" data-variant-id="${v.id}" data-type="${currentType}" aria-label="Smanji">−</button>`
+              : '') +
+          `</div>` +
         `</div>` +
         (qty > 0
-          ? `<div class="counter counter--mini">` +
-              `<button class="counter__btn btn--counter-minus" data-category-id="${categoryId}" data-variant-id="${v.id}" data-type="${currentType}" aria-label="Smanji">−</button>` +
-              `<span class="counter__val${pulseClass}">${qty}</span>` +
-              `<button class="counter__btn btn--counter-plus" data-category-id="${categoryId}" data-variant-id="${v.id}" data-type="${currentType}" aria-label="Povećaj">+</button>` +
-            `</div>`
+          ? `<span class="variant-card-qty${pulseClass}">×${qty}</span>`
           : '');
 
       dom.varGrid.appendChild(card);
@@ -675,8 +679,8 @@
 
   // Delegate clicks on the variant grid: counter buttons + card body taps
   dom.varGrid.addEventListener('click', (e) => {
-    // Counter buttons
-    const btn = e.target.closest('.counter__btn');
+    // Counter buttons (plus or minus, new layout)
+    const btn = e.target.closest('.btn--counter-plus, .btn--counter-minus');
     if (btn) {
       handleCounterClick(e);
       return;
