@@ -34,6 +34,13 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// Message: handle skip waiting from client
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 // Fetch: cache-first for CSS/JS, network-first for HTML
 self.addEventListener('fetch', (event) => {
   const { request } = event;

@@ -18,6 +18,7 @@
     <header class="header">
       <h1 class="header__title">Stand Tracker</h1>
       <p id="current-date" class="header__date"></p>
+      <button id="home-btn-settings" class="btn btn--icon home-settings-btn" aria-label="Postavke">⚙</button>
     </header>
 
     <div class="grid-2 home-cards">
@@ -117,6 +118,33 @@
         <button type="button" class="btn btn--danger btn--icon admin-variant-row__remove">&#10005;</button>
       </div>
     </template>
+  </section>
+
+  <!-- ===== VIEW 6: SETTINGS ===== -->
+  <section id="app-settings" class="view">
+    <header class="header">
+      <button id="set-back" class="btn btn--back">← Nazad</button>
+      <h1 class="header__title">Postavke</h1>
+    </header>
+
+    <div class="settings-section">
+      <h2 class="settings-section__title">Ažuriranje</h2>
+      <button id="set-check-update" class="settings-btn">Provjeri ažuriranja</button>
+      <p id="set-update-status" class="settings-info"></p>
+      <p class="settings-info">Verzija: v1.0</p>
+    </div>
+
+    <div class="settings-section">
+      <h2 class="settings-section__title">Podaci</h2>
+      <button id="set-export" class="settings-btn">Izvezi podatke</button>
+      <button id="set-import" class="settings-btn">Uvezi podatke</button>
+      <p id="set-data-status" class="settings-info"></p>
+    </div>
+
+    <div class="settings-section">
+      <h2 class="settings-section__title">Info</h2>
+      <p class="settings-info">Stand Tracker — Praćenje ulaza i otpisa proizvoda na štandu</p>
+    </div>
   </section>
 
   <script src="app.js" defer></script>

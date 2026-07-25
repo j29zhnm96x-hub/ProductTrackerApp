@@ -40,6 +40,14 @@
     varAddBtn:    $('#var-add-btn'),
     currentDate:  $('#current-date'),
     allViews:     $$('.view'),
+    // Settings view
+    setBack:       $('#set-back'),
+    setCheckUpdate: $('#set-check-update'),
+    setExport:     $('#set-export'),
+    setImport:     $('#set-import'),
+    setUpdateStatus: $('#set-update-status'),
+    setDataStatus: $('#set-data-status'),
+    homeBtnSettings: $('#home-btn-settings'),
   };
 
   // --------------- STORAGE KEY ---------------
@@ -51,6 +59,7 @@
   let currentType = 'ulaz';    // 'ulaz' | 'otpis'
   let currentCategoryId = null;
   let viewStack = [];          // for back navigation
+  let swRegistration = null;  // service worker registration ref
 
   // --------------- DEFAULT DATA ---------------
   function defaultData() {
@@ -284,6 +293,12 @@
   function goAdmin() {
     pushView('app-admin');
     renderAdmin();
+  }
+
+  function goSettings() {
+    pushView('app-settings');
+    dom.setUpdateStatus.textContent = '';
+    dom.setDataStatus.textContent = '';
   }
 
   /* ===================================================================
@@ -772,6 +787,169 @@
   }
 
   /* ===================================================================
+   *  DATA EXPORT / IMPORT
+   * =================================================================== */
+
+  function exportData() {
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const today = getToday();
+    const filename = `stand-tracker-backup-${today}.json`;
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    dom.setDataStatus.textContent = 'Podaci izvezeni.';
+  }
+
+  function importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.style.display = 'none';
+    document.body.appendChild(input);
+
+    input.addEventListener('change', () => {
+      const file = input.files[0];
+      if (!file) {
+        document.body.removeChild(input);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const json = JSON.parse(e.target.result);
+
+          // Validate structure
+          if (!Array.isArray(json.categories)) {
+            throw new Error('Neispravna struktura: nedostaje "categories" niz.');
+          }
+          if (!json.currentSession || typeof json.currentSession !== 'object') {
+            throw new Error('Neispravna struktura: nedostaje "currentSession" objekt.');
+          }
+          if (typeof json.currentSession.date !== 'string' || !Array.isArray(json.currentSession.items)) {
+            throw new Error('Neispravna struktura: "currentSession" mora imati "date" i "items".');
+          }
+          if (!Array.isArray(json.history)) {
+            throw new Error('Neispravna struktura: nedostaje "history" niz.');
+          }
+
+          if (!confirm('Uvoz će zamijeniti sve postojeće podatke. Nastaviti?')) {
+            document.body.removeChild(input);
+            return;
+          }
+
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(json));
+          dom.setDataStatus.textContent = 'Podaci uvezeni. Aplikacija će se osvježiti.';
+          setTimeout(() => location.reload(), 1000);
+
+        } catch (err) {
+          alert('Greška pri uvozu: ' + err.message);
+        }
+        document.body.removeChild(input);
+      };
+
+      reader.onerror = () => {
+        alert('Greška pri čitanju datoteke.');
+        document.body.removeChild(input);
+      };
+
+      reader.readAsText(file);
+    });
+
+    input.click();
+  }
+
+  /* ===================================================================
+   *  SERVICE WORKER AUTO-UPDATE
+   * =================================================================== */
+
+  function checkForUpdate() {
+    if (!navigator.serviceWorker) {
+      dom.setUpdateStatus.textContent = 'Service Worker nije podržan u ovom pregledniku.';
+      return;
+    }
+
+    dom.setUpdateStatus.textContent = 'Provjeravam ažuriranja...';
+
+    if (!swRegistration) {
+      // Try to get the registration if not already stored
+      navigator.serviceWorker.getRegistration().then((reg) => {
+        swRegistration = reg;
+        performUpdateCheck();
+      });
+    } else {
+      performUpdateCheck();
+    }
+  }
+
+  function performUpdateCheck() {
+    if (!swRegistration) {
+      dom.setUpdateStatus.textContent = 'Service Worker nije registriran.';
+      return;
+    }
+
+    let updateFound = false;
+
+    // Handler for new SW found
+    const handleUpdate = () => {
+      updateFound = true;
+      const newWorker = swRegistration.installing;
+      if (!newWorker) return;
+
+      newWorker.addEventListener('statechange', () => {
+        if (newWorker.state === 'installed') {
+          if (navigator.serviceWorker.controller) {
+            // Already have an active SW — this is an update
+            dom.setUpdateStatus.textContent = 'Ažuriranje instalirano. Aplikacija će se osvježiti.';
+
+            // Tell the waiting SW to activate immediately
+            if (swRegistration.waiting) {
+              swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
+
+            // Listen for controller change → reload
+            const onControllerChange = () => {
+              window.location.reload();
+            };
+            navigator.serviceWorker.addEventListener('controllerchange', onControllerChange, { once: true });
+          } else {
+            // First install — no active SW yet
+            console.log('Service Worker prvi put instaliran.');
+            dom.setUpdateStatus.textContent = 'Aplikacija spremna za rad izvan mreže.';
+          }
+        }
+      });
+    };
+
+    // Attach listener
+    swRegistration.addEventListener('updatefound', handleUpdate);
+
+    // Force update check
+    swRegistration.update().then(() => {
+      // The updatefound event fires asynchronously if there's a new SW
+      // Give it 5 seconds, then report no update if nothing happened
+      setTimeout(() => {
+        swRegistration.removeEventListener('updatefound', handleUpdate);
+        if (!updateFound) {
+          dom.setUpdateStatus.textContent = 'Nemate ažuriranja. Verzija je najnovija.';
+        }
+      }, 5000);
+    }).catch((err) => {
+      swRegistration.removeEventListener('updatefound', handleUpdate);
+      dom.setUpdateStatus.textContent = 'Greška pri provjeri ažuriranja.';
+      console.error('Update check error:', err);
+    });
+  }
+
+  /* ===================================================================
    *  SERVICE WORKER REGISTRATION
    * =================================================================== */
 
@@ -781,6 +959,7 @@
     navigator.serviceWorker
       .register('/service-worker.js')
       .then((reg) => {
+        swRegistration = reg;
         console.log('Service Worker registriran:', reg.scope);
       })
       .catch((err) => {
@@ -829,6 +1008,13 @@
       addCategory(name);
       renderAdmin();
     });
+
+    // Settings
+    dom.homeBtnSettings.addEventListener('click', goSettings);
+    dom.setBack.addEventListener('click', goHome);
+    dom.setCheckUpdate.addEventListener('click', checkForUpdate);
+    dom.setExport.addEventListener('click', exportData);
+    dom.setImport.addEventListener('click', importData);
   }
 
   /* ===================================================================
