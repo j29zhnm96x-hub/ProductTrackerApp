@@ -325,24 +325,46 @@ svg {
   min-height: 56px;
   border-left: 3px solid transparent;
   transition: background 0.15s ease, border-color 0.15s ease;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .card--variant:hover {
   background: var(--bg-surface-hover);
 }
 
+.card--variant:active {
+  background: var(--bg-surface-press);
+  transform: scale(0.98);
+}
+
 /* Active variant (qty > 0) — accent left border */
-.card--variant[data-active="true"],
-.card--variant.variant--active {
+.card--variant.card--has-items {
   border-left-color: var(--accent);
 }
 
-.variant-card-price {
-  font-size: 1.125rem;
+/* Variant card body — the tap target showing code + category name */
+.variant-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 4px 0;
+}
+
+.variant-card-code {
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--text-primary);
-  white-space: nowrap;
-  min-width: 60px;
+  line-height: 1.2;
+}
+
+.variant-card-cat {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
 }
 
 /* ---- COUNTER ---- */
@@ -416,6 +438,24 @@ svg {
   100% {
     transform: scale(1);
   }
+}
+
+/* ---- COUNTER MINI (on variant cards) ---- */
+.counter--mini {
+  gap: 2px;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.counter--mini .counter__btn {
+  width: 30px;
+  height: 30px;
+  font-size: 1rem;
+}
+
+.counter--mini .counter__val {
+  min-width: 24px;
+  font-size: 0.9375rem;
 }
 
 /* ---- GRID ---- */
@@ -678,21 +718,48 @@ svg {
   color: var(--text-primary);
 }
 
-.card--admin .admin-cat-variants {
+.card--admin .admin-cat-chips {
   font-size: 0.8125rem;
   color: var(--text-secondary);
   display: flex;
   flex-wrap: wrap;
-  gap: 4px 8px;
+  gap: 6px 8px;
 }
 
-.card--admin .admin-cat-variant {
+.admin-variant-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   background: var(--bg-root);
   padding: 2px 8px;
   border-radius: 4px;
   font-weight: 500;
   color: var(--accent);
   white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.admin-variant-chip:hover {
+  background: var(--bg-surface-press);
+}
+
+.admin-variant-chip .admin-variant-delete {
+  font-size: 0.75rem;
+  line-height: 1;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
+  min-width: auto;
+  min-height: auto;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.admin-variant-chip .admin-variant-delete:hover {
+  color: var(--danger);
 }
 
 .card--admin .admin-cat-actions {
@@ -760,7 +827,7 @@ svg {
   gap: 8px;
 }
 
-.admin-variant-row__price {
+.admin-variant-row__code {
   flex: 1;
   padding: 8px 12px;
   background: var(--bg-root);
@@ -773,11 +840,11 @@ svg {
   transition: border-color 0.15s ease;
 }
 
-.admin-variant-row__price:focus {
+.admin-variant-row__code:focus {
   border-color: var(--accent);
 }
 
-.admin-variant-row__price::placeholder {
+.admin-variant-row__code::placeholder {
   color: var(--text-muted);
 }
 

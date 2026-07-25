@@ -64,7 +64,7 @@
 
     <div id="var-grid" class="grid-2"></div>
 
-    <button id="var-add-btn" class="btn btn--primary" style="display:none;">Dodaj novu cijenu</button>
+    <button id="var-add-btn" class="btn btn--primary" style="display:none;">Dodaj novu šifru</button>
   </section>
 
   <!-- ===== VIEW 4: HISTORY ===== -->
@@ -102,7 +102,7 @@
         <div class="admin-variant-rows">
           <!-- variant rows injected here -->
         </div>
-        <button type="button" class="btn btn--ghost admin-form__add-variant">+ Dodaj cijenu</button>
+        <button type="button" class="btn btn--ghost admin-form__add-variant">+ Dodaj šifru</button>
         <div class="admin-form__actions">
           <button type="button" class="btn btn--primary admin-form__save">Spremi</button>
           <button type="button" class="btn btn--danger admin-form__cancel">Odustani</button>
@@ -113,7 +113,7 @@
     <!-- Hidden variant row template -->
     <template id="admin-variant-row-template">
       <div class="admin-variant-row">
-        <input type="number" class="admin-variant-row__price" placeholder="Cijena (€)" min="0" step="0.01" required>
+        <input type="text" class="admin-variant-row__code" placeholder="Šifra (npr. 06)" required>
         <button type="button" class="btn btn--danger btn--icon admin-variant-row__remove">&#10005;</button>
       </div>
     </template>

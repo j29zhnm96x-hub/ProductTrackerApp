@@ -169,15 +169,12 @@
       .reduce((sum, i) => sum + i.quantity, 0);
   }
 
-  /** Add a new category with variants array. */
-  function addCategory(name, variants) {
+  /** Add a new category with empty variants array. */
+  function addCategory(name) {
     const cat = {
       id: uid('cat'),
       name: name.trim(),
-      variants: (variants || []).map((v) => ({
-        id: uid('var'),
-        price: typeof v === 'number' ? v : (v.price || 0),
-      })),
+      variants: [],
     };
     data.categories.push(cat);
     saveData(data);
@@ -185,10 +182,10 @@
   }
 
   /** Add a variant to an existing category. */
-  function addVariant(categoryId, price) {
+  function addVariant(categoryId, code) {
     const cat = findCategory(categoryId);
     if (!cat) return null;
-    const v = { id: uid('var'), price: Number(price) || 0 };
+    const v = { id: uid('var'), code: String(code).trim() };
     cat.variants.push(v);
     saveData(data);
     return v;
@@ -224,11 +221,11 @@
     saveData(data);
   }
 
-  /** Update variant price. */
-  function updateVariantPrice(categoryId, variantId, newPrice) {
+  /** Update variant code. */
+  function updateVariantCode(categoryId, variantId, newCode) {
     const v = findVariant(categoryId, variantId);
     if (!v) return;
-    v.price = Number(newPrice) || 0;
+    v.code = String(newCode).trim();
     saveData(data);
   }
 
@@ -338,7 +335,7 @@
   }
 
   // --------------- VARIANTS ---------------
-  function renderVariants(categoryId) {
+  function renderVariants(categoryId, pulseVariantId) {
     const cat = findCategory(categoryId);
     if (!cat) return;
 
@@ -348,23 +345,30 @@
 
     if (cat.variants.length === 0) {
       dom.varGrid.innerHTML =
-        '<p class="empty-state">Nema cijena za ovu kategoriju.</p>';
+        '<p class="empty-state">Nema šifri za ovu kategoriju.</p>';
     }
 
     cat.variants.forEach((v) => {
       const qty = getItemQuantity(categoryId, v.id, currentType);
+      const code = getVariantLabel(v);
+      const pulseClass = (v.id === pulseVariantId) ? ' counter--pulse' : '';
       const card = document.createElement('div');
       card.className = 'card card--variant' + (qty > 0 ? ' card--has-items' : '');
       card.dataset.categoryId = categoryId;
       card.dataset.variantId = v.id;
 
       card.innerHTML =
-        `<span class="variant-card-price">${formatPrice(v.price)}</span>` +
-        `<div class="counter">` +
-          `<button class="counter__btn btn--counter-minus" data-category-id="${categoryId}" data-variant-id="${v.id}" data-type="${currentType}" aria-label="Smanji">−</button>` +
-          `<span class="counter__val" data-category-id="${categoryId}" data-variant-id="${v.id}">${qty}</span>` +
-          `<button class="counter__btn btn--counter-plus" data-category-id="${categoryId}" data-variant-id="${v.id}" data-type="${currentType}" aria-label="Povećaj">+</button>` +
-        `</div>`;
+        `<div class="variant-card-body">` +
+          `<span class="variant-card-code">${escHtml(code)}</span>` +
+          `<span class="variant-card-cat">${escHtml(cat.name)}</span>` +
+        `</div>` +
+        (qty > 0
+          ? `<div class="counter counter--mini">` +
+              `<button class="counter__btn btn--counter-minus" data-category-id="${categoryId}" data-variant-id="${v.id}" data-type="${currentType}" aria-label="Smanji">−</button>` +
+              `<span class="counter__val${pulseClass}">${qty}</span>` +
+              `<button class="counter__btn btn--counter-plus" data-category-id="${categoryId}" data-variant-id="${v.id}" data-type="${currentType}" aria-label="Povećaj">+</button>` +
+            `</div>`
+          : '');
 
       dom.varGrid.appendChild(card);
     });
@@ -372,11 +376,12 @@
     dom.varAddBtn.style.display = 'block';
   }
 
-  /** Format a price number for display: "5€" or "7.50€" */
-  function formatPrice(price) {
-    const num = Number(price);
-    if (Number.isInteger(num)) return `${num}€`;
-    return `${num.toFixed(2).replace('.', ',')}€`;
+  /** Get display label for a variant (code or legacy price). */
+  function getVariantLabel(v) {
+    if (v.code !== undefined) return v.code;
+    // Legacy data with price field
+    if (v.price !== undefined) return String(v.price);
+    return '?';
   }
 
   // --------------- HISTORY ---------------
@@ -479,8 +484,8 @@
       const catName = cat ? cat.name : 'Nepoznato';
       grouped[catId].forEach((item) => {
         const v = findVariant(catId, item.variantId);
-        const priceLabel = v ? formatPrice(v.price) : '?€';
-        lines.push(`${catName} ${priceLabel}: ${item.quantity} kom`);
+        const codeLabel = v ? getVariantLabel(v) : '?';
+        lines.push(`${catName} ${codeLabel}: ${item.quantity} kom`);
       });
     });
     return lines;
@@ -512,25 +517,26 @@
 
       const variantsHtml = cat.variants
         .map((v) => {
+          const code = getVariantLabel(v);
           return (
-            `<div class="admin-variant-item" data-category-id="${cat.id}" data-variant-id="${v.id}">` +
-              `<span class="admin-variant-price">${formatPrice(v.price)}</span>` +
-              `<button class="btn btn--danger btn--icon admin-variant-delete" data-category-id="${cat.id}" data-variant-id="${v.id}" aria-label="Obriši cijenu">&#10005;</button>` +
-            `</div>`
+            `<span class="admin-variant-chip" data-category-id="${cat.id}" data-variant-id="${v.id}">` +
+              `<span class="admin-variant-code">${escHtml(code)}</span>` +
+              `<button class="admin-variant-delete" data-category-id="${cat.id}" data-variant-id="${v.id}" aria-label="Obriši šifru">&#10005;</button>` +
+            `</span>`
           );
         })
         .join('');
 
       card.innerHTML =
         `<div class="admin-cat-header">` +
-          `<span class="admin-cat-name" data-category-id="${cat.id}">${escHtml(cat.name)}</span>` +
+          `<span class="admin-cat-name">${escHtml(cat.name)}</span>` +
           `<div class="admin-cat-actions">` +
             `<button class="btn btn--ghost admin-cat-rename" data-category-id="${cat.id}" aria-label="Preimenuj">&#9998;</button>` +
-            `<button class="btn btn--ghost admin-cat-add-variant" data-category-id="${cat.id}" aria-label="Dodaj cijenu">+ Cijena</button>` +
+            `<button class="btn btn--ghost admin-cat-add-variant" data-category-id="${cat.id}" aria-label="Dodaj šifru">+ Šifra</button>` +
             `<button class="btn btn--danger admin-cat-delete" data-category-id="${cat.id}" aria-label="Obriši kategoriju">Obriši</button>` +
           `</div>` +
         `</div>` +
-        `<div class="admin-variants">${variantsHtml || '<span class="admin-no-variants">Nema cijena</span>'}</div>`;
+        `<div class="admin-cat-chips">${variantsHtml || '<span class="admin-no-variants">Nema šifri</span>'}</div>`;
 
       dom.adminCatList.appendChild(card);
     });
@@ -540,19 +546,17 @@
   }
 
   function bindAdminEvents() {
-    // Remove old listeners to avoid duplicates — use event delegation on adminCatList
-    // We attach once on the container; check if already bound
     if (dom.adminCatList.dataset.bound === 'true') return;
     dom.adminCatList.dataset.bound = 'true';
 
     dom.adminCatList.addEventListener('click', (e) => {
       const target = e.target;
 
-      // Delete variant
+      // Delete variant (X button on chip)
       if (target.classList.contains('admin-variant-delete')) {
         const catId = target.dataset.categoryId;
         const varId = target.dataset.variantId;
-        if (confirm('Obrisati ovu cijenu?')) {
+        if (confirm('Obrisati ovu šifru?')) {
           deleteVariant(catId, varId);
           renderAdmin();
         }
@@ -574,15 +578,10 @@
       // Add variant to category
       if (target.classList.contains('admin-cat-add-variant')) {
         const catId = target.dataset.categoryId;
-        const priceStr = prompt('Cijena (€):', '');
-        if (priceStr !== null && priceStr.trim() !== '') {
-          const price = parseFloat(priceStr.replace(',', '.'));
-          if (!isNaN(price) && price >= 0) {
-            addVariant(catId, price);
-            renderAdmin();
-          } else {
-            alert('Neispravna cijena.');
-          }
+        const code = prompt('Šifra (npr. 06):', '');
+        if (code && code.trim()) {
+          addVariant(catId, code.trim());
+          renderAdmin();
         }
         return;
       }
@@ -591,29 +590,24 @@
       if (target.classList.contains('admin-cat-delete')) {
         const catId = target.dataset.categoryId;
         const cat = findCategory(catId);
-        if (confirm(`Obrisati kategoriju "${cat ? cat.name : ''}" i sve njene cijene?`)) {
+        if (confirm(`Obrisati kategoriju "${cat ? cat.name : ''}" i sve njene šifre?`)) {
           deleteCategory(catId);
           renderAdmin();
         }
         return;
       }
 
-      // Edit variant price (click on the price text)
-      if (target.classList.contains('admin-variant-price')) {
-        const row = target.closest('.admin-variant-item');
-        if (!row) return;
-        const catId = row.dataset.categoryId;
-        const varId = row.dataset.variantId;
+      // Edit variant code (click on the code chip)
+      if (target.classList.contains('admin-variant-code')) {
+        const chip = target.closest('.admin-variant-chip');
+        if (!chip) return;
+        const catId = chip.dataset.categoryId;
+        const varId = chip.dataset.variantId;
         const v = findVariant(catId, varId);
-        const newPriceStr = prompt('Nova cijena (€):', v ? v.price : '');
-        if (newPriceStr !== null && newPriceStr.trim() !== '') {
-          const price = parseFloat(newPriceStr.replace(',', '.'));
-          if (!isNaN(price) && price >= 0) {
-            updateVariantPrice(catId, varId, price);
-            renderAdmin();
-          } else {
-            alert('Neispravna cijena.');
-          }
+        const newCode = prompt('Nova šifra:', v ? getVariantLabel(v) : '');
+        if (newCode && newCode.trim()) {
+          updateVariantCode(catId, varId, newCode.trim());
+          renderAdmin();
         }
         return;
       }
@@ -633,28 +627,10 @@
     const type = btn.dataset.type;
     const delta = btn.classList.contains('btn--counter-plus') ? 1 : -1;
 
-    const newQty = updateQuantity(catId, varId, type, delta);
+    updateQuantity(catId, varId, type, delta);
 
-    // Update the counter value display in the same card
-    const card = btn.closest('.card--variant');
-    if (card) {
-      const valEl = card.querySelector('.counter__val');
-      if (valEl) {
-        valEl.textContent = newQty;
-        // Pulse animation
-        valEl.classList.add('counter--pulse');
-        setTimeout(() => valEl.classList.remove('counter--pulse'), 300);
-      }
-
-      // Toggle has-items class
-      if (newQty > 0) {
-        card.classList.add('card--has-items');
-      } else {
-        card.classList.remove('card--has-items');
-      }
-    }
-
-    // Update category badge if we came from category view
+    // Re-render to handle counter show/hide and pulse animation
+    renderVariants(catId, varId);
     updateCategoryBadge(catId, type);
   }
 
@@ -682,8 +658,25 @@
     }
   }
 
-  // Delegate counter clicks on the variant grid
-  dom.varGrid.addEventListener('click', handleCounterClick);
+  // Delegate clicks on the variant grid: counter buttons + card body taps
+  dom.varGrid.addEventListener('click', (e) => {
+    // Counter buttons
+    const btn = e.target.closest('.counter__btn');
+    if (btn) {
+      handleCounterClick(e);
+      return;
+    }
+
+    // Card body tap → +1
+    const card = e.target.closest('.card--variant');
+    if (card) {
+      const catId = card.dataset.categoryId;
+      const varId = card.dataset.variantId;
+      updateQuantity(catId, varId, currentType, 1);
+      renderVariants(catId, varId);
+      updateCategoryBadge(catId, currentType);
+    }
+  });
 
   /* ===================================================================
    *  SHARE & RESET ("Pošalji i zaključi")
@@ -757,16 +750,7 @@
     const name = prompt('Naziv nove kategorije:', '');
     if (!name || !name.trim()) return;
 
-    const priceStr = prompt('Početna cijena (€):', '');
-    if (priceStr === null || priceStr.trim() === '') return;
-
-    const price = parseFloat(priceStr.replace(',', '.'));
-    if (isNaN(price) || price < 0) {
-      alert('Neispravna cijena.');
-      return;
-    }
-
-    const cat = addCategory(name, [{ price }]);
+    addCategory(name);
 
     // Refresh current view
     if (currentView === 'categories') {
@@ -775,23 +759,15 @@
     if (currentView === 'admin') {
       renderAdmin();
     }
-
-    return cat;
   }
 
   function promptNewVariant() {
     if (!currentCategoryId) return;
 
-    const priceStr = prompt('Nova cijena (€):', '');
-    if (priceStr === null || priceStr.trim() === '') return;
+    const code = prompt('Nova šifra (npr. 06):', '');
+    if (!code || !code.trim()) return;
 
-    const price = parseFloat(priceStr.replace(',', '.'));
-    if (isNaN(price) || price < 0) {
-      alert('Neispravna cijena.');
-      return;
-    }
-
-    addVariant(currentCategoryId, price);
+    addVariant(currentCategoryId, code.trim());
     renderVariants(currentCategoryId);
   }
 
@@ -850,14 +826,7 @@
     dom.adminAddCat.addEventListener('click', () => {
       const name = prompt('Naziv nove kategorije:', '');
       if (!name || !name.trim()) return;
-      const priceStr = prompt('Početna cijena (€):', '');
-      if (priceStr === null || priceStr.trim() === '') return;
-      const price = parseFloat(priceStr.replace(',', '.'));
-      if (isNaN(price) || price < 0) {
-        alert('Neispravna cijena.');
-        return;
-      }
-      addCategory(name, [{ price }]);
+      addCategory(name);
       renderAdmin();
     });
   }
