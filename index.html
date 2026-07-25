@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f1724">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="styles.css">
+  <title>Stand Tracker</title>
+</head>
+<body>
+
+  <!-- ===== VIEW 1: HOME ===== -->
+  <section id="app-home" class="view view--active">
+    <header class="header">
+      <h1 class="header__title">Stand Tracker</h1>
+      <p id="current-date" class="header__date"></p>
+    </header>
+
+    <div class="grid-2 home-cards">
+      <button id="home-btn-ulaz" class="card card--home" aria-label="ULAZ">
+        <span class="home-card-icon home-card-icon--up">&uarr;</span>
+        <span class="home-card-label">ULAZ</span>
+      </button>
+      <button id="home-btn-otpis" class="card card--home" aria-label="OTPIS">
+        <span class="home-card-icon home-card-icon--down">&darr;</span>
+        <span class="home-card-label">OTPIS</span>
+      </button>
+    </div>
+
+    <nav class="nav">
+      <button id="nav-history" class="nav__btn">Povijest</button>
+      <button id="nav-admin" class="nav__btn">Proizvodi</button>
+      <button id="nav-share" class="nav__btn">Pošalji i zaključi</button>
+    </nav>
+  </section>
+
+  <!-- ===== VIEW 2: CATEGORY LIST ===== -->
+  <section id="app-categories" class="view">
+    <header class="header">
+      <button id="cat-back" class="btn btn--back" aria-label="Nazad">&larr; Nazad</button>
+      <h1 id="cat-title" class="header__title">ULAZ — Proizvodi</h1>
+    </header>
+
+    <div id="cat-grid" class="grid-2"></div>
+
+    <p id="cat-empty" class="empty-state" style="display:none;">
+      Nema proizvoda. Dodajte ih u Postavke &rarr; Proizvodi.
+    </p>
+
+    <button id="cat-add-btn" class="btn btn--primary" style="display:none;">Dodaj novu kategoriju</button>
+  </section>
+
+  <!-- ===== VIEW 3: VARIANT LIST ===== -->
+  <section id="app-variants" class="view">
+    <header class="header">
+      <button id="var-back" class="btn btn--back" aria-label="Nazad">&larr; Nazad</button>
+      <h1 id="var-title" class="header__title">Narukvice</h1>
+      <p id="var-subtitle" class="header__subtitle">ULAZ</p>
+    </header>
+
+    <div id="var-grid" class="grid-2"></div>
+
+    <button id="var-add-btn" class="btn btn--primary" style="display:none;">Dodaj novu cijenu</button>
+  </section>
+
+  <!-- ===== VIEW 4: HISTORY ===== -->
+  <section id="app-history" class="view">
+    <header class="header">
+      <button id="hist-back" class="btn btn--back" aria-label="Nazad">&larr; Nazad</button>
+      <h1 class="header__title">Povijest</h1>
+    </header>
+
+    <div id="hist-list"></div>
+
+    <p id="hist-empty" class="empty-state" style="display:none;">
+      Još nema spremljene povijesti.
+    </p>
+  </section>
+
+  <!-- ===== VIEW 5: ADMIN/PRODUCTS ===== -->
+  <section id="app-admin" class="view">
+    <header class="header">
+      <button id="admin-back" class="btn btn--back" aria-label="Nazad">&larr; Nazad</button>
+      <h1 class="header__title">Upravljanje proizvodima</h1>
+    </header>
+
+    <button id="admin-add-cat-btn" class="btn btn--primary">Dodaj kategoriju</button>
+
+    <div id="admin-cat-list"></div>
+
+    <!-- Hidden admin form template: injected dynamically -->
+    <template id="admin-form-template">
+      <div class="admin-form">
+        <label>
+          Naziv kategorije:
+          <input type="text" class="admin-form__name" required>
+        </label>
+        <div class="admin-variant-rows">
+          <!-- variant rows injected here -->
+        </div>
+        <button type="button" class="btn btn--ghost admin-form__add-variant">+ Dodaj cijenu</button>
+        <div class="admin-form__actions">
+          <button type="button" class="btn btn--primary admin-form__save">Spremi</button>
+          <button type="button" class="btn btn--danger admin-form__cancel">Odustani</button>
+        </div>
+      </div>
+    </template>
+
+    <!-- Hidden variant row template -->
+    <template id="admin-variant-row-template">
+      <div class="admin-variant-row">
+        <input type="number" class="admin-variant-row__price" placeholder="Cijena (€)" min="0" step="0.01" required>
+        <button type="button" class="btn btn--danger btn--icon admin-variant-row__remove">&#10005;</button>
+      </div>
+    </template>
+  </section>
+
+  <script src="app.js" defer></script>
+</body>
+</html>
