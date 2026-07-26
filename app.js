@@ -52,7 +52,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.8';
+  const VERSION = '1.0.9';
 
   // --------------- STATE ---------------
   let data = null;
@@ -588,15 +588,9 @@
 
       dom.adminCatList.appendChild(card);
     });
-
-    dom.adminCatList.dataset.bound = 'false';
-    bindAdminEvents();
   }
 
   function bindAdminEvents() {
-    if (dom.adminCatList.dataset.bound === 'true') return;
-    dom.adminCatList.dataset.bound = 'true';
-
     dom.adminCatList.addEventListener('click', (e) => {
       const target = e.target;
 
@@ -994,6 +988,9 @@
     dom.setCheckUpdate.addEventListener('click', checkForUpdate);
     dom.setExport.addEventListener('click', exportData);
     dom.setImport.addEventListener('click', importData);
+
+    // Admin event delegation (once)
+    bindAdminEvents();
   }
 
   /* ===================================================================
