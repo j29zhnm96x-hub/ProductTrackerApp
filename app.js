@@ -52,7 +52,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.12';
+  const VERSION = '1.0.13';
 
   // --------------- STATE ---------------
   let data = null;
@@ -555,20 +555,14 @@
 
       const variantCount = cat.variants.length;
       
-      // Variant rows (each full width with drag handle, ↑↓ buttons, edit)
+      // Variant rows (drag handle + code + edit + delete)
       const variantRows = cat.variants
         .map((v, idx) => {
           const code = getVariantLabel(v);
-          const isFirst = idx === 0;
-          const isLast = idx === cat.variants.length - 1;
           return (
             `<div class="admin-var-row" data-idx="${idx}" data-category-id="${cat.id}" data-variant-id="${v.id}">` +
               `<span class="drag-handle" data-category-id="${cat.id}" data-variant-id="${v.id}" data-idx="${idx}">⋮⋮</span>` +
               `<span class="admin-var-code">${escHtml(code)}</span>` +
-              `<div class="admin-var-arrows">` +
-                (!isFirst ? `<button class="btn-icon-arrow arrow-up" data-category-id="${cat.id}" data-variant-id="${v.id}" aria-label="Gore">↑</button>` : `<span class="btn-icon-arrow arrow-spacer"></span>`) +
-                (!isLast ? `<button class="btn-icon-arrow arrow-down" data-category-id="${cat.id}" data-variant-id="${v.id}" aria-label="Dolje">↓</button>` : `<span class="btn-icon-arrow arrow-spacer"></span>`) +
-              `</div>` +
               `<button class="btn-icon-arrow admin-var-edit" data-category-id="${cat.id}" data-variant-id="${v.id}" aria-label="Uredi">✎</button>` +
               `<button class="btn-icon-arrow admin-var-delete" data-category-id="${cat.id}" data-variant-id="${v.id}" aria-label="Obriši">×</button>` +
             `</div>`
@@ -635,24 +629,6 @@
           deleteVariant(catId, varId);
           renderAdmin();
         }
-        return;
-      }
-
-      // Move variant up
-      if (target.classList.contains('arrow-up')) {
-        const catId = target.dataset.categoryId;
-        const varId = target.dataset.variantId;
-        moveVariant(catId, varId, 'up');
-        renderAdmin();
-        return;
-      }
-
-      // Move variant down
-      if (target.classList.contains('arrow-down')) {
-        const catId = target.dataset.categoryId;
-        const varId = target.dataset.variantId;
-        moveVariant(catId, varId, 'down');
-        renderAdmin();
         return;
       }
 

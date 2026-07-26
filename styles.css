@@ -867,12 +867,6 @@ svg {
   min-width: 0;
 }
 
-.admin-var-arrows {
-  display: flex;
-  gap: 2px;
-  flex-shrink: 0;
-}
-
 .btn-icon-arrow {
   width: 32px;
   height: 32px;
@@ -895,14 +889,7 @@ svg {
   color: var(--text-primary);
 }
 
-.arrow-spacer {
-  width: 32px;
-  height: 32px;
-  display: inline-flex;
-  flex-shrink: 0;
-}
-
-.admin-var-delete {
+.admin-var-edit {
   color: var(--text-muted);
 }
 .admin-var-delete:active {
