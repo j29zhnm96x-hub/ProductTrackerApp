@@ -52,7 +52,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.10';
+  const VERSION = '1.0.11';
 
   // --------------- STATE ---------------
   let data = null;
@@ -60,6 +60,7 @@
   let currentType = 'ulaz';    // 'ulaz' | 'otpis'
   let currentCategoryId = null;
   let viewStack = [];          // for back navigation
+  let expandedCats = new Set(); // track which admin cards are expanded
   let swRegistration = null;  // service worker registration ref
 
   // --------------- DEFAULT DATA ---------------
@@ -553,39 +554,42 @@
       card.dataset.catId = cat.id;
 
       const variantCount = cat.variants.length;
-      const variantsHtml = cat.variants
+      
+      // Variant rows (each full width with ↑↓ buttons)
+      const variantRows = cat.variants
         .map((v, idx) => {
           const code = getVariantLabel(v);
           const isFirst = idx === 0;
           const isLast = idx === cat.variants.length - 1;
-          const upArrow = !isFirst
-            ? `<button class="chip-arrow chip-arrow--up" data-category-id="${cat.id}" data-variant-id="${v.id}" aria-label="Pomakni gore">▲</button>`
-            : '';
-          const downArrow = !isLast
-            ? `<button class="chip-arrow chip-arrow--down" data-category-id="${cat.id}" data-variant-id="${v.id}" aria-label="Pomakni dolje">▼</button>`
-            : '';
           return (
-            `<span class="admin-variant-chip" data-category-id="${cat.id}" data-variant-id="${v.id}">` +
-              upArrow + downArrow +
-              `<span class="admin-variant-code">${escHtml(code)}</span>` +
-              `<button class="admin-variant-delete" data-category-id="${cat.id}" data-variant-id="${v.id}" aria-label="Obriši šifru">&#10005;</button>` +
-            `</span>`
+            `<div class="admin-var-row">` +
+              `<span class="admin-var-code">${escHtml(code)}</span>` +
+              `<div class="admin-var-arrows">` +
+                (!isFirst ? `<button class="btn-icon-arrow arrow-up" data-category-id="${cat.id}" data-variant-id="${v.id}" aria-label="Gore">↑</button>` : `<span class="btn-icon-arrow arrow-spacer"></span>`) +
+                (!isLast ? `<button class="btn-icon-arrow arrow-down" data-category-id="${cat.id}" data-variant-id="${v.id}" aria-label="Dolje">↓</button>` : `<span class="btn-icon-arrow arrow-spacer"></span>`) +
+              `</div>` +
+              `<button class="btn-icon-arrow admin-var-delete" data-category-id="${cat.id}" data-variant-id="${v.id}" aria-label="Obriši">×</button>` +
+            `</div>`
           );
         })
         .join('');
 
-      // Collapsed header
+      const isExpanded = expandedCats.has(cat.id);
+      const bodyStyle = isExpanded ? '' : 'display:none;';
+      const arrowSymbol = isExpanded ? '▲' : '▼';
+
       const headerHtml =
         `<div class="admin-cat-summary">` +
           `<span class="admin-cat-name">${escHtml(cat.name)}</span>` +
           `<span class="admin-cat-count">${variantCount} šifri</span>` +
-          `<span class="admin-cat-arrow">▼</span>` +
+          `<span class="admin-cat-arrow">${arrowSymbol}</span>` +
         `</div>`;
 
-      // Expanded body (hidden by default)
       const bodyHtml =
-        `<div class="admin-cat-body" style="display:none;">` +
-          `<div class="admin-cat-chips">${variantsHtml || '<span class="admin-no-variants">Nema šifri</span>'}</div>` +
+        `<div class="admin-cat-body" style="${bodyStyle}">` +
+          (variantRows
+            ? `<div class="admin-var-list">${variantRows}</div>`
+            : '<span class="admin-no-variants">Nema šifri</span>') +
           `<div class="admin-cat-actions">` +
             `<button class="btn btn--ghost admin-cat-rename" data-category-id="${cat.id}" aria-label="Preimenuj">Preimenuj</button>` +
             `<button class="btn btn--ghost admin-cat-add-variant" data-category-id="${cat.id}" aria-label="Dodaj šifru">+ Šifra</button>` +
@@ -595,7 +599,6 @@
 
       card.innerHTML = headerHtml + bodyHtml;
 
-      // Toggle on summary click
       card.querySelector('.admin-cat-summary').addEventListener('click', () => {
         const body = card.querySelector('.admin-cat-body');
         const arrow = card.querySelector('.admin-cat-arrow');
@@ -603,9 +606,11 @@
         if (expanded) {
           body.style.display = 'none';
           arrow.textContent = '▼';
+          expandedCats.delete(cat.id);
         } else {
           body.style.display = 'block';
           arrow.textContent = '▲';
+          expandedCats.add(cat.id);
         }
       });
 
@@ -617,8 +622,8 @@
     dom.adminCatList.addEventListener('click', (e) => {
       const target = e.target;
 
-      // Delete variant (X button on chip)
-      if (target.classList.contains('admin-variant-delete')) {
+      // Delete variant (X button)
+      if (target.classList.contains('admin-var-delete')) {
         const catId = target.dataset.categoryId;
         const varId = target.dataset.variantId;
         if (confirm('Obrisati ovu šifru?')) {
@@ -629,7 +634,7 @@
       }
 
       // Move variant up
-      if (target.classList.contains('chip-arrow--up')) {
+      if (target.classList.contains('arrow-up')) {
         const catId = target.dataset.categoryId;
         const varId = target.dataset.variantId;
         moveVariant(catId, varId, 'up');
@@ -638,7 +643,7 @@
       }
 
       // Move variant down
-      if (target.classList.contains('chip-arrow--down')) {
+      if (target.classList.contains('arrow-down')) {
         const catId = target.dataset.categoryId;
         const varId = target.dataset.variantId;
         moveVariant(catId, varId, 'down');
@@ -680,12 +685,12 @@
         return;
       }
 
-      // Edit variant code (click on the code chip)
-      if (target.classList.contains('admin-variant-code')) {
-        const chip = target.closest('.admin-variant-chip');
-        if (!chip) return;
-        const catId = chip.dataset.categoryId;
-        const varId = chip.dataset.variantId;
+      // Edit variant code (click on the code)
+      if (target.classList.contains('admin-var-code')) {
+        const row = target.closest('.admin-var-row');
+        if (!row) return;
+        const catId = row.querySelector('[data-category-id]').dataset.categoryId;
+        const varId = row.querySelector('[data-variant-id]').dataset.variantId;
         const v = findVariant(catId, varId);
         const newCode = prompt('Nova šifra:', v ? getVariantLabel(v) : '');
         if (newCode && newCode.trim()) {
