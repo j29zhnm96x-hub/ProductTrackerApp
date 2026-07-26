@@ -792,19 +792,15 @@ svg {
   flex-shrink: 0;
 }
 
-.admin-cat-arrow {
-  margin-left: 4px;
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
+.admin-cat-spacer {
+  flex: 1;
 }
 
 /* Admin header icon buttons (rename/delete on card header) */
 .admin-cat-icon {
-  width: 36px;
-  height: 36px;
-  font-size: 1.1rem;
+  width: 47px;
+  height: 47px;
+  font-size: 1.4rem;
   flex-shrink: 0;
 }
 

@@ -52,7 +52,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.14';
+  const VERSION = '1.0.15';
 
   // --------------- STATE ---------------
   let data = null;
@@ -572,15 +572,14 @@
 
       const isExpanded = expandedCats.has(cat.id);
       const bodyStyle = isExpanded ? '' : 'display:none;';
-      const arrowSymbol = isExpanded ? '▲' : '▼';
 
       const headerHtml =
         `<div class="admin-cat-summary">` +
           `<span class="admin-cat-name">${escHtml(cat.name)}</span>` +
           `<span class="admin-cat-count">${variantCount} proizvoda</span>` +
+          `<span class="admin-cat-spacer"></span>` +
           `<button class="btn-icon-arrow admin-cat-rename admin-cat-icon" data-category-id="${cat.id}" aria-label="Preimenuj">✎</button>` +
           `<button class="btn-icon-arrow admin-cat-delete admin-cat-icon" data-category-id="${cat.id}" aria-label="Obriši">×</button>` +
-          `<span class="admin-cat-arrow">${arrowSymbol}</span>` +
         `</div>`;
 
       const bodyHtml =
@@ -600,15 +599,12 @@
         if (e.target.closest('.admin-cat-rename, .admin-cat-delete')) return;
         
         const body = card.querySelector('.admin-cat-body');
-        const arrow = card.querySelector('.admin-cat-arrow');
         const expanded = body.style.display !== 'none';
         if (expanded) {
           body.style.display = 'none';
-          arrow.textContent = '▼';
           expandedCats.delete(cat.id);
         } else {
           body.style.display = 'block';
-          arrow.textContent = '▲';
           expandedCats.add(cat.id);
         }
       });
