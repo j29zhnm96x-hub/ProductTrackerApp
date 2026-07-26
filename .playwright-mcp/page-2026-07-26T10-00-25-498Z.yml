@@ -1,0 +1,20 @@
+- generic [active] [ref=f129e1]:
+  - text: ☰ ⚙ ✓
+  - generic [ref=f129e104]:
+    - generic [ref=f129e105]:
+      - button "Nazad" [ref=f129e106] [cursor=pointer]: ← Nazad
+      - heading "Narukvice" [level=1] [ref=f129e107]
+      - paragraph [ref=f129e108]: ULAZ
+    - generic [ref=f129e109]:
+      - generic [ref=f129e119] [cursor=pointer]:
+        - generic [ref=f129e120]:
+          - generic [ref=f129e121]: "08"
+          - generic [ref=f129e122]: Narukvice
+        - generic [ref=f129e123]:
+          - button "Smanji" [ref=f129e124]: −
+          - generic [ref=f129e125]: "1"
+          - button "Povećaj" [ref=f129e126]: +
+      - generic [ref=f129e128] [cursor=pointer]:
+        - generic [ref=f129e129]: "15"
+        - generic [ref=f129e130]: Narukvice
+    - button "Dodaj novu šifru" [ref=f129e118] [cursor=pointer]

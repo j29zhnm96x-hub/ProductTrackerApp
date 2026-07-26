@@ -52,7 +52,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.11';
+  const VERSION = '1.0.12';
 
   // --------------- STATE ---------------
   let data = null;
@@ -555,19 +555,21 @@
 
       const variantCount = cat.variants.length;
       
-      // Variant rows (each full width with ↑↓ buttons)
+      // Variant rows (each full width with drag handle, ↑↓ buttons, edit)
       const variantRows = cat.variants
         .map((v, idx) => {
           const code = getVariantLabel(v);
           const isFirst = idx === 0;
           const isLast = idx === cat.variants.length - 1;
           return (
-            `<div class="admin-var-row">` +
+            `<div class="admin-var-row" data-idx="${idx}" data-category-id="${cat.id}" data-variant-id="${v.id}">` +
+              `<span class="drag-handle" data-category-id="${cat.id}" data-variant-id="${v.id}" data-idx="${idx}">⋮⋮</span>` +
               `<span class="admin-var-code">${escHtml(code)}</span>` +
               `<div class="admin-var-arrows">` +
                 (!isFirst ? `<button class="btn-icon-arrow arrow-up" data-category-id="${cat.id}" data-variant-id="${v.id}" aria-label="Gore">↑</button>` : `<span class="btn-icon-arrow arrow-spacer"></span>`) +
                 (!isLast ? `<button class="btn-icon-arrow arrow-down" data-category-id="${cat.id}" data-variant-id="${v.id}" aria-label="Dolje">↓</button>` : `<span class="btn-icon-arrow arrow-spacer"></span>`) +
               `</div>` +
+              `<button class="btn-icon-arrow admin-var-edit" data-category-id="${cat.id}" data-variant-id="${v.id}" aria-label="Uredi">✎</button>` +
               `<button class="btn-icon-arrow admin-var-delete" data-category-id="${cat.id}" data-variant-id="${v.id}" aria-label="Obriši">×</button>` +
             `</div>`
           );
@@ -616,6 +618,9 @@
 
       dom.adminCatList.appendChild(card);
     });
+
+    // Init drag-and-drop on variant rows
+    initDragDrop();
   }
 
   function bindAdminEvents() {
@@ -685,12 +690,10 @@
         return;
       }
 
-      // Edit variant code (click on the code)
-      if (target.classList.contains('admin-var-code')) {
-        const row = target.closest('.admin-var-row');
-        if (!row) return;
-        const catId = row.querySelector('[data-category-id]').dataset.categoryId;
-        const varId = row.querySelector('[data-variant-id]').dataset.variantId;
+      // Edit variant code (edit button)
+      if (target.classList.contains('admin-var-edit')) {
+        const catId = target.dataset.categoryId;
+        const varId = target.dataset.variantId;
         const v = findVariant(catId, varId);
         const newCode = prompt('Nova šifra:', v ? getVariantLabel(v) : '');
         if (newCode && newCode.trim()) {
@@ -699,7 +702,111 @@
         }
         return;
       }
+
+      // Edit variant code (click on the code text — REMOVED, use edit button instead)
+      // No-op: clicking the code does nothing now
     });
+  }
+
+  // -------- DRAG-AND-DROP REORDER --------
+  let dragCatId = null;
+  let dragFromIdx = -1;
+  let dragToIdx = -1;
+  let dragStartY = 0;
+  let dragRows = [];
+  let dragRowHeights = [];
+
+  function initDragDrop() {
+    const handles = dom.adminCatList.querySelectorAll('.drag-handle');
+    handles.forEach((handle) => {
+      handle.removeEventListener('touchstart', onDragStart);
+      handle.addEventListener('touchstart', onDragStart, { passive: false });
+      handle.removeEventListener('mousedown', onDragStart);
+      handle.addEventListener('mousedown', onDragStart);
+    });
+  }
+
+  function onDragStart(e) {
+    const handle = e.target.closest('.drag-handle');
+    if (!handle) return;
+    e.preventDefault();
+
+    const row = handle.closest('.admin-var-row');
+    if (!row) return;
+
+    const list = row.closest('.admin-var-list');
+    if (!list) return;
+
+    dragCatId = handle.dataset.categoryId;
+    dragFromIdx = parseInt(row.dataset.idx);
+    dragToIdx = dragFromIdx;
+    dragStartY = e.touches ? e.touches[0].clientY : e.clientY;
+    dragRows = Array.from(list.querySelectorAll('.admin-var-row'));
+    dragRowHeights = dragRows.map(r => r.getBoundingClientRect().height);
+
+    row.classList.add('dragging');
+
+    if (e.touches) {
+      document.addEventListener('touchmove', onDragMove, { passive: false });
+      document.addEventListener('touchend', onDragEnd, { once: true });
+    } else {
+      document.addEventListener('mousemove', onDragMove);
+      document.addEventListener('mouseup', onDragEnd, { once: true });
+    }
+  }
+
+  function onDragMove(e) {
+    e.preventDefault();
+    const y = e.touches ? e.touches[0].clientY : e.clientY;
+    const deltaY = y - dragStartY;
+
+    // Find target index based on cumulative heights
+    let cum = 0;
+    let targetIdx = 0;
+    for (let i = 0; i < dragRowHeights.length; i++) {
+      cum += dragRowHeights[i];
+      if (deltaY < cum) {
+        targetIdx = i;
+        break;
+      }
+      targetIdx = i + 1;
+    }
+    targetIdx = Math.max(0, Math.min(dragRows.length - 1, targetIdx));
+
+    if (targetIdx !== dragToIdx) {
+      // Remove old indicators
+      dragRows.forEach(r => r.classList.remove('drag-above', 'drag-below'));
+      dragToIdx = targetIdx;
+
+      if (targetIdx < dragFromIdx) {
+        dragRows[targetIdx].classList.add('drag-above');
+      } else if (targetIdx > dragFromIdx) {
+        dragRows[targetIdx].classList.add('drag-below');
+      }
+    }
+  }
+
+  function onDragEnd() {
+    document.removeEventListener('touchmove', onDragMove);
+    document.removeEventListener('mousemove', onDragMove);
+
+    dragRows.forEach(r => r.classList.remove('dragging', 'drag-above', 'drag-below'));
+
+    if (dragToIdx !== dragFromIdx && dragCatId) {
+      // Perform the move: shift the variant in the array
+      const cat = findCategory(dragCatId);
+      if (cat) {
+        const item = cat.variants.splice(dragFromIdx, 1)[0];
+        cat.variants.splice(dragToIdx, 0, item);
+        saveData(data);
+      }
+      renderAdmin();
+      return;
+    }
+
+    dragCatId = null;
+    dragFromIdx = -1;
+    dragToIdx = -1;
   }
 
   /* ===================================================================

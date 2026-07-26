@@ -810,7 +810,7 @@ svg {
   margin-bottom: 10px;
 }
 
-/* Variant row: code left, arrows + delete right */
+/* Variant row: code left, arrows + edit + delete right */
 .admin-var-row {
   display: flex;
   align-items: center;
@@ -818,6 +818,45 @@ svg {
   background: var(--bg-root);
   padding: 6px 8px;
   border-radius: 6px;
+  position: relative;
+  transition: box-shadow 0.15s, transform 0.15s;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.drag-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 32px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  letter-spacing: -2px;
+  cursor: grab;
+  flex-shrink: 0;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+  color: var(--text-primary);
+}
+
+.admin-var-row.dragging {
+  opacity: 0.4;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  z-index: 10;
+}
+
+.admin-var-row.drag-above {
+  border-top: 2px solid var(--accent);
+}
+
+.admin-var-row.drag-below {
+  border-bottom: 2px solid var(--accent);
 }
 
 .admin-var-code {
