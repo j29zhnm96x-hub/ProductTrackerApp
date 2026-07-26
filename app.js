@@ -902,9 +902,15 @@
       return;
     }
 
+    // Case 1: A new SW is already waiting (found in previous check/page load)
+    if (swRegistration.waiting) {
+      activateWaitingSW();
+      return;
+    }
+
     let updateFound = false;
 
-    // Handler for new SW found
+    // Case 2: No waiting SW yet — listen for updatefound
     const handleUpdate = () => {
       updateFound = true;
       const newWorker = swRegistration.installing;
@@ -913,21 +919,8 @@
       newWorker.addEventListener('statechange', () => {
         if (newWorker.state === 'installed') {
           if (navigator.serviceWorker.controller) {
-            // Already have an active SW — this is an update
-            dom.setUpdateStatus.textContent = 'Ažuriranje instalirano. Aplikacija će se osvježiti.';
-
-            // Tell the waiting SW to activate immediately
-            if (swRegistration.waiting) {
-              swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
-            }
-
-            // Listen for controller change → reload
-            const onControllerChange = () => {
-              window.location.reload();
-            };
-            navigator.serviceWorker.addEventListener('controllerchange', onControllerChange, { once: true });
+            activateWaitingSW();
           } else {
-            // First install — no active SW yet
             console.log('Service Worker prvi put instaliran.');
             dom.setUpdateStatus.textContent = 'Aplikacija spremna za rad izvan mreže.';
           }
@@ -935,13 +928,17 @@
       });
     };
 
-    // Attach listener
     swRegistration.addEventListener('updatefound', handleUpdate);
 
-    // Force update check
     swRegistration.update().then(() => {
-      // The updatefound event fires asynchronously if there's a new SW
-      // Give it 5 seconds, then report no update if nothing happened
+      // After update() resolves, the SW might already be waiting
+      if (swRegistration.waiting) {
+        swRegistration.removeEventListener('updatefound', handleUpdate);
+        updateFound = true;
+        activateWaitingSW();
+        return;
+      }
+
       setTimeout(() => {
         swRegistration.removeEventListener('updatefound', handleUpdate);
         if (!updateFound) {
@@ -953,6 +950,14 @@
       dom.setUpdateStatus.textContent = 'Greška pri provjeri ažuriranja.';
       console.error('Update check error:', err);
     });
+  }
+
+  function activateWaitingSW() {
+    dom.setUpdateStatus.textContent = 'Ažuriranje instalirano. Aplikacija će se osvježiti.';
+    swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    }, { once: true });
   }
 
   /* ===================================================================
