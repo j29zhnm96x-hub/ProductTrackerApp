@@ -865,87 +865,74 @@
    *  SERVICE WORKER AUTO-UPDATE
    * =================================================================== */
 
-  function checkForUpdate() {
+  async function checkForUpdate() {
     if (!navigator.serviceWorker) {
-      dom.setUpdateStatus.textContent = 'Service Worker nije podržan u ovom pregledniku.';
+      dom.setUpdateStatus.textContent = 'Service Worker nije podržan.';
       return;
     }
 
     dom.setUpdateStatus.textContent = 'Provjeravam ažuriranja...';
 
-    if (!swRegistration) {
-      // Try to get the registration if not already stored
-      navigator.serviceWorker.getRegistration().then((reg) => {
-        swRegistration = reg;
-        performUpdateCheck();
-      });
-    } else {
-      performUpdateCheck();
+    try {
+      // Step 1: Try standard SW update
+      const reg = swRegistration || await navigator.serviceWorker.getRegistration();
+      swRegistration = reg;
+
+      if (reg) {
+        await reg.update();
+
+        // New SW waiting?
+        if (reg.waiting) {
+          dom.setUpdateStatus.textContent = 'Ažuriranje pronađeno. Osvježavam...';
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          await waitForControllerChange(3000);
+          window.location.reload();
+          return;
+        }
+
+        // SW installing?
+        if (reg.installing) {
+          dom.setUpdateStatus.textContent = 'Ažuriranje se instalira...';
+          await waitForInstalled(reg.installing, 5000);
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+            await waitForControllerChange(2000);
+            window.location.reload();
+            return;
+          }
+        }
+      }
+
+      // Step 2: No SW update detected — force-clear everything and reload
+      dom.setUpdateStatus.textContent = 'Prisilno osvježavanje...';
+      if (reg) await reg.unregister();
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+      window.location.reload();
+
+    } catch (err) {
+      console.error('Update check failed:', err);
+      // Fallback: just reload
+      dom.setUpdateStatus.textContent = 'Osvježavam...';
+      setTimeout(() => window.location.reload(), 500);
     }
   }
 
-  function performUpdateCheck() {
-    if (!swRegistration) {
-      dom.setUpdateStatus.textContent = 'Service Worker nije registriran.';
-      return;
-    }
-
-    // Case 1: A new SW is already waiting (found in previous check/page load)
-    if (swRegistration.waiting) {
-      activateWaitingSW();
-      return;
-    }
-
-    let updateFound = false;
-
-    // Case 2: No waiting SW yet — listen for updatefound
-    const handleUpdate = () => {
-      updateFound = true;
-      const newWorker = swRegistration.installing;
-      if (!newWorker) return;
-
-      newWorker.addEventListener('statechange', () => {
-        if (newWorker.state === 'installed') {
-          if (navigator.serviceWorker.controller) {
-            activateWaitingSW();
-          } else {
-            console.log('Service Worker prvi put instaliran.');
-            dom.setUpdateStatus.textContent = 'Aplikacija spremna za rad izvan mreže.';
-          }
-        }
-      });
-    };
-
-    swRegistration.addEventListener('updatefound', handleUpdate);
-
-    swRegistration.update().then(() => {
-      // After update() resolves, the SW might already be waiting
-      if (swRegistration.waiting) {
-        swRegistration.removeEventListener('updatefound', handleUpdate);
-        updateFound = true;
-        activateWaitingSW();
-        return;
-      }
-
-      setTimeout(() => {
-        swRegistration.removeEventListener('updatefound', handleUpdate);
-        if (!updateFound) {
-          dom.setUpdateStatus.textContent = 'Nemate ažuriranja. Verzija je najnovija.';
-        }
-      }, 5000);
-    }).catch((err) => {
-      swRegistration.removeEventListener('updatefound', handleUpdate);
-      dom.setUpdateStatus.textContent = 'Greška pri provjeri ažuriranja.';
-      console.error('Update check error:', err);
+  function waitForControllerChange(timeout) {
+    return new Promise((resolve) => {
+      const handler = () => { navigator.serviceWorker.removeEventListener('controllerchange', handler); resolve(); };
+      navigator.serviceWorker.addEventListener('controllerchange', handler);
+      setTimeout(() => { navigator.serviceWorker.removeEventListener('controllerchange', handler); resolve(); }, timeout);
     });
   }
 
-  function activateWaitingSW() {
-    dom.setUpdateStatus.textContent = 'Ažuriranje instalirano. Aplikacija će se osvježiti.';
-    swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      window.location.reload();
-    }, { once: true });
+  function waitForInstalled(worker, timeout) {
+    return new Promise((resolve) => {
+      if (worker.state === 'installed') { resolve(); return; }
+      const handler = () => { if (worker.state === 'installed') { worker.removeEventListener('statechange', handler); resolve(); } };
+      worker.addEventListener('statechange', handler);
+      setTimeout(() => { worker.removeEventListener('statechange', handler); resolve(); }, timeout);
+    });
   }
 
   /* ===================================================================
