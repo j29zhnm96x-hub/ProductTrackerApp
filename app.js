@@ -374,10 +374,7 @@
 
       card.innerHTML =
         `<div class="variant-card-top">` +
-          `<div class="variant-card-left">` +
-            `<span class="variant-card-code">${escHtml(code)}</span>` +
-            `<span class="variant-card-cat">${escHtml(cat.name)}</span>` +
-          `</div>` +
+          `<span class="variant-card-info">${escHtml(cat.name)} <span class="variant-card-code">${escHtml(code)}</span></span>` +
           `<div class="variant-card-actions">` +
             `<button class="btn--add btn--counter-plus" data-category-id="${categoryId}" data-variant-id="${v.id}" data-type="${currentType}" aria-label="Dodaj">+</button>` +
             (qty > 0
