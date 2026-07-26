@@ -146,16 +146,38 @@ svg {
   flex-shrink: 0;
 }
 
+/* Header with back button: flex row so they don't overlap */
+.header:has(.btn--back) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.header:has(.btn--back) .header__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header:has(.btn--back) .header__subtitle {
+  width: 100%;
+  padding-left: calc(var(--touch-min) + 8px);
+}
+
+/* Home header stays centered */
+#app-home .header {
+  text-align: center;
+}
+
 .header__title {
   font-size: 1.25rem;
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--text-primary);
   line-height: 1.3;
-}
-
-#app-home .header {
-  text-align: center;
 }
 
 #current-date {
@@ -173,34 +195,24 @@ svg {
 
 /* ---- BUTTON: BACK ---- */
 .btn--back {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
   font-size: 1rem;
   color: var(--accent);
   font-weight: 500;
   min-width: var(--touch-min);
   min-height: var(--touch-min);
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 4px;
   padding: 0 8px 0 0;
   line-height: 1;
   border-radius: var(--radius-btn);
   transition: background 0.15s ease;
+  flex-shrink: 0;
 }
 
 .btn--back:active {
   background: var(--bg-surface-press);
-}
-
-/* Headers with back button push title right */
-.header:has(.btn--back) .header__title {
-  padding-left: 0;
-  text-align: center;
-  padding-right: 0;
 }
 
 /* ---- HOME CARDS ---- */
