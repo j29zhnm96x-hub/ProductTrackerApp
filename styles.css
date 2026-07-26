@@ -321,9 +321,8 @@ svg {
   display: block;
   padding: 16px;
   margin-bottom: 10px;
-  border-left: 3px solid transparent;
-  transition: background 0.15s ease, border-color 0.15s ease;
-  cursor: pointer;
+  transition: background 0.15s ease;
+  cursor: default;
   -webkit-user-select: none;
   user-select: none;
 }
@@ -332,28 +331,22 @@ svg {
   background: var(--bg-surface-hover);
 }
 
-.card--variant:active {
-  background: var(--bg-surface-press);
-}
-
 .card--variant.card--has-items {
-  border-left-color: var(--accent);
+  outline: 1.5px solid var(--accent);
+  outline-offset: -1.5px;
 }
 
 .variant-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
 }
 
 .variant-row__text {
   min-width: 0;
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
 }
 
 .variant-row__title {
@@ -378,10 +371,10 @@ svg {
 }
 
 .variant-row__qty {
-  font-size: 0.875rem;
+  font-size: 1.0625rem;
   font-weight: 600;
   color: var(--accent);
-  line-height: 1.2;
+  line-height: 1.3;
 }
 
 .variant-row__qty.counter--pulse {
@@ -412,9 +405,12 @@ svg {
 }
 
 .var-btn--plus {
+  width: 53px;
+  height: 53px;
   background: var(--bg-root);
   border: 1px solid var(--border-light);
   color: var(--text-primary);
+  font-size: 1.6rem;
 }
 
 .var-btn--plus:active {

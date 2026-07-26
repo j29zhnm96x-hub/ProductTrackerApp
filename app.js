@@ -378,10 +378,10 @@
             `<div class="variant-row__title">` +
               `<span class="variant-row__name">${escHtml(cat.name)}</span>` +
               `<span class="variant-row__code">${escHtml(code)}</span>` +
+              (qty > 0
+                ? `<span class="variant-row__qty${pulseClass}">×${qty}</span>`
+                : '') +
             `</div>` +
-            (qty > 0
-              ? `<span class="variant-row__qty${pulseClass}">×${qty}</span>`
-              : '') +
           `</div>` +
           `<div class="variant-row__actions">` +
             (qty > 0
@@ -679,23 +679,11 @@
     }
   }
 
-  // Delegate clicks on the variant grid: counter buttons + card body taps
+  // Delegate clicks on the variant grid: counter buttons only
   dom.varGrid.addEventListener('click', (e) => {
-    // Counter buttons (plus or minus, new layout)
     const btn = e.target.closest('.btn--counter-plus, .btn--counter-minus');
     if (btn) {
       handleCounterClick(e);
-      return;
-    }
-
-    // Card body tap → +1
-    const card = e.target.closest('.card--variant');
-    if (card) {
-      const catId = card.dataset.categoryId;
-      const varId = card.dataset.variantId;
-      updateQuantity(catId, varId, currentType, 1);
-      renderVariants(catId, varId);
-      updateCategoryBadge(catId, currentType);
     }
   });
 
