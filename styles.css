@@ -752,14 +752,27 @@ svg {
 }
 
 .card--admin {
-  padding: 16px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
   border: 1px solid var(--border);
+  cursor: default;
+  overflow: hidden;
 }
 
-.card--admin:hover {
+/* Collapsed: clickable summary row */
+.admin-cat-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: background 0.15s ease;
+}
+
+.admin-cat-summary:hover {
   background: var(--bg-surface-hover);
 }
 
@@ -767,6 +780,26 @@ svg {
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.admin-cat-count {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.admin-cat-arrow {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+/* Expanded body */
+.admin-cat-body {
+  padding: 0 16px 14px 16px;
 }
 
 .card--admin .admin-cat-chips {
@@ -775,6 +808,7 @@ svg {
   display: flex;
   flex-wrap: wrap;
   gap: 6px 8px;
+  margin-bottom: 10px;
 }
 
 .admin-variant-chip {
@@ -811,6 +845,11 @@ svg {
 
 .admin-variant-chip .admin-variant-delete:hover {
   color: var(--danger);
+}
+
+.admin-no-variants {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
 }
 
 .card--admin .admin-cat-actions {

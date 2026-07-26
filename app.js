@@ -52,7 +52,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.7';
+  const VERSION = '1.0.8';
 
   // --------------- STATE ---------------
   let data = null;
@@ -536,7 +536,9 @@
     data.categories.forEach((cat) => {
       const card = document.createElement('div');
       card.className = 'card card--admin';
+      card.dataset.catId = cat.id;
 
+      const variantCount = cat.variants.length;
       const variantsHtml = cat.variants
         .map((v) => {
           const code = getVariantLabel(v);
@@ -549,21 +551,45 @@
         })
         .join('');
 
-      card.innerHTML =
-        `<div class="admin-cat-header">` +
+      // Collapsed header
+      const headerHtml =
+        `<div class="admin-cat-summary">` +
           `<span class="admin-cat-name">${escHtml(cat.name)}</span>` +
+          `<span class="admin-cat-count">${variantCount} šifri</span>` +
+          `<span class="admin-cat-arrow">▼</span>` +
+        `</div>`;
+
+      // Expanded body (hidden by default)
+      const bodyHtml =
+        `<div class="admin-cat-body" style="display:none;">` +
+          `<div class="admin-cat-chips">${variantsHtml || '<span class="admin-no-variants">Nema šifri</span>'}</div>` +
           `<div class="admin-cat-actions">` +
-            `<button class="btn btn--ghost admin-cat-rename" data-category-id="${cat.id}" aria-label="Preimenuj">&#9998;</button>` +
+            `<button class="btn btn--ghost admin-cat-rename" data-category-id="${cat.id}" aria-label="Preimenuj">Preimenuj</button>` +
             `<button class="btn btn--ghost admin-cat-add-variant" data-category-id="${cat.id}" aria-label="Dodaj šifru">+ Šifra</button>` +
             `<button class="btn btn--danger admin-cat-delete" data-category-id="${cat.id}" aria-label="Obriši kategoriju">Obriši</button>` +
           `</div>` +
-        `</div>` +
-        `<div class="admin-cat-chips">${variantsHtml || '<span class="admin-no-variants">Nema šifri</span>'}</div>`;
+        `</div>`;
+
+      card.innerHTML = headerHtml + bodyHtml;
+
+      // Toggle on summary click
+      card.querySelector('.admin-cat-summary').addEventListener('click', () => {
+        const body = card.querySelector('.admin-cat-body');
+        const arrow = card.querySelector('.admin-cat-arrow');
+        const expanded = body.style.display !== 'none';
+        if (expanded) {
+          body.style.display = 'none';
+          arrow.textContent = '▼';
+        } else {
+          body.style.display = 'block';
+          arrow.textContent = '▲';
+        }
+      });
 
       dom.adminCatList.appendChild(card);
     });
 
-    // Delegate events for admin actions
+    dom.adminCatList.dataset.bound = 'false';
     bindAdminEvents();
   }
 
