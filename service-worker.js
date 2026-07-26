@@ -5,7 +5,8 @@ const PRE_CACHE = [
   '/index.html',
   '/styles.css',
   '/app.js',
-  '/manifest.json'
+  '/manifest.json',
+  '/version.json'
 ];
 
 // Install: pre-cache core assets

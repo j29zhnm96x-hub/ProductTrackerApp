@@ -52,6 +52,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
+  const VERSION = '1.0.5';
 
   // --------------- STATE ---------------
   let data = null;
@@ -866,73 +867,39 @@
    * =================================================================== */
 
   async function checkForUpdate() {
-    if (!navigator.serviceWorker) {
-      dom.setUpdateStatus.textContent = 'Service Worker nije podržan.';
-      return;
-    }
-
     dom.setUpdateStatus.textContent = 'Provjeravam ažuriranja...';
 
     try {
-      // Step 1: Try standard SW update
-      const reg = swRegistration || await navigator.serviceWorker.getRegistration();
-      swRegistration = reg;
+      // Fetch version.json from server, bypass all caches
+      const resp = await fetch('/version.json?t=' + Date.now(), { cache: 'no-store' });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
 
-      if (reg) {
-        await reg.update();
+      const remote = await resp.json();
+      const remoteVersion = remote.version || '0';
+      const localVersion = localStorage.getItem('stand-tracker-version') || '0';
 
-        // New SW waiting?
-        if (reg.waiting) {
-          dom.setUpdateStatus.textContent = 'Ažuriranje pronađeno. Osvježavam...';
-          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-          await waitForControllerChange(3000);
-          window.location.reload();
-          return;
-        }
+      if (remoteVersion !== localVersion) {
+        dom.setUpdateStatus.textContent = 'Nova verzija ' + remoteVersion + '. Osvježavam...';
 
-        // SW installing?
-        if (reg.installing) {
-          dom.setUpdateStatus.textContent = 'Ažuriranje se instalira...';
-          await waitForInstalled(reg.installing, 5000);
-          if (reg.waiting) {
-            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-            await waitForControllerChange(2000);
-            window.location.reload();
-            return;
-          }
-        }
+        // Nuke caches
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+
+        // Unregister SW so next load gets fresh one
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg) await reg.unregister();
+
+        // Store new version before reload
+        localStorage.setItem('stand-tracker-version', remoteVersion);
+
+        window.location.reload();
+      } else {
+        dom.setUpdateStatus.textContent = 'Nemate ažuriranja. Verzija ' + localVersion + ' je najnovija.';
       }
-
-      // Step 2: No SW update detected — force-clear everything and reload
-      dom.setUpdateStatus.textContent = 'Prisilno osvježavanje...';
-      if (reg) await reg.unregister();
-      const keys = await caches.keys();
-      await Promise.all(keys.map(k => caches.delete(k)));
-      window.location.reload();
-
     } catch (err) {
       console.error('Update check failed:', err);
-      // Fallback: just reload
-      dom.setUpdateStatus.textContent = 'Osvježavam...';
-      setTimeout(() => window.location.reload(), 500);
+      dom.setUpdateStatus.textContent = 'Greška pri provjeri. Pokušajte ponovo.';
     }
-  }
-
-  function waitForControllerChange(timeout) {
-    return new Promise((resolve) => {
-      const handler = () => { navigator.serviceWorker.removeEventListener('controllerchange', handler); resolve(); };
-      navigator.serviceWorker.addEventListener('controllerchange', handler);
-      setTimeout(() => { navigator.serviceWorker.removeEventListener('controllerchange', handler); resolve(); }, timeout);
-    });
-  }
-
-  function waitForInstalled(worker, timeout) {
-    return new Promise((resolve) => {
-      if (worker.state === 'installed') { resolve(); return; }
-      const handler = () => { if (worker.state === 'installed') { worker.removeEventListener('statechange', handler); resolve(); } };
-      worker.addEventListener('statechange', handler);
-      setTimeout(() => { worker.removeEventListener('statechange', handler); resolve(); }, timeout);
-    });
   }
 
   /* ===================================================================
@@ -1021,6 +988,11 @@
   function init() {
     // Load persistent data
     data = loadData();
+
+    // Store current version (so update check doesn't trigger on first run)
+    if (!localStorage.getItem('stand-tracker-version')) {
+      localStorage.setItem('stand-tracker-version', VERSION);
+    }
 
     // Check if currentSession date matches today
     const today = getToday();
