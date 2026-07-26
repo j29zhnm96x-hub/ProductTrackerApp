@@ -52,7 +52,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.9';
+  const VERSION = '1.0.10';
 
   // --------------- STATE ---------------
   let data = null;
@@ -236,6 +236,20 @@
     const v = findVariant(categoryId, variantId);
     if (!v) return;
     v.code = String(newCode).trim();
+    saveData(data);
+  }
+
+  /** Move a variant up or down within its category. */
+  function moveVariant(categoryId, variantId, direction) {
+    const cat = findCategory(categoryId);
+    if (!cat) return;
+    const idx = cat.variants.findIndex(v => v.id === variantId);
+    if (idx === -1) return;
+    if (direction === 'up' && idx > 0) {
+      [cat.variants[idx - 1], cat.variants[idx]] = [cat.variants[idx], cat.variants[idx - 1]];
+    } else if (direction === 'down' && idx < cat.variants.length - 1) {
+      [cat.variants[idx], cat.variants[idx + 1]] = [cat.variants[idx + 1], cat.variants[idx]];
+    }
     saveData(data);
   }
 
@@ -540,10 +554,19 @@
 
       const variantCount = cat.variants.length;
       const variantsHtml = cat.variants
-        .map((v) => {
+        .map((v, idx) => {
           const code = getVariantLabel(v);
+          const isFirst = idx === 0;
+          const isLast = idx === cat.variants.length - 1;
+          const upArrow = !isFirst
+            ? `<button class="chip-arrow chip-arrow--up" data-category-id="${cat.id}" data-variant-id="${v.id}" aria-label="Pomakni gore">▲</button>`
+            : '';
+          const downArrow = !isLast
+            ? `<button class="chip-arrow chip-arrow--down" data-category-id="${cat.id}" data-variant-id="${v.id}" aria-label="Pomakni dolje">▼</button>`
+            : '';
           return (
             `<span class="admin-variant-chip" data-category-id="${cat.id}" data-variant-id="${v.id}">` +
+              upArrow + downArrow +
               `<span class="admin-variant-code">${escHtml(code)}</span>` +
               `<button class="admin-variant-delete" data-category-id="${cat.id}" data-variant-id="${v.id}" aria-label="Obriši šifru">&#10005;</button>` +
             `</span>`
@@ -602,6 +625,24 @@
           deleteVariant(catId, varId);
           renderAdmin();
         }
+        return;
+      }
+
+      // Move variant up
+      if (target.classList.contains('chip-arrow--up')) {
+        const catId = target.dataset.categoryId;
+        const varId = target.dataset.variantId;
+        moveVariant(catId, varId, 'up');
+        renderAdmin();
+        return;
+      }
+
+      // Move variant down
+      if (target.classList.contains('chip-arrow--down')) {
+        const catId = target.dataset.categoryId;
+        const varId = target.dataset.variantId;
+        moveVariant(catId, varId, 'down');
+        renderAdmin();
         return;
       }
 

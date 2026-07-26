@@ -829,6 +829,25 @@ svg {
   background: var(--bg-surface-press);
 }
 
+.chip-arrow {
+  font-size: 0.55rem;
+  line-height: 1;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 1px;
+  min-width: auto;
+  min-height: auto;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: color 0.1s;
+}
+
+.chip-arrow:hover {
+  color: var(--text-primary);
+}
+
 .admin-variant-chip .admin-variant-delete {
   font-size: 0.75rem;
   line-height: 1;
