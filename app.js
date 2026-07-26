@@ -52,7 +52,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.13';
+  const VERSION = '1.0.14';
 
   // --------------- STATE ---------------
   let data = null;
@@ -376,7 +376,7 @@
 
     if (cat.variants.length === 0) {
       dom.varGrid.innerHTML =
-        '<p class="empty-state">Nema šifri za ovu kategoriju.</p>';
+        '<p class="empty-state">Nema proizvoda za ovu kategoriju.</p>';
     }
 
     cat.variants.forEach((v) => {
@@ -577,7 +577,9 @@
       const headerHtml =
         `<div class="admin-cat-summary">` +
           `<span class="admin-cat-name">${escHtml(cat.name)}</span>` +
-          `<span class="admin-cat-count">${variantCount} šifri</span>` +
+          `<span class="admin-cat-count">${variantCount} proizvoda</span>` +
+          `<button class="btn-icon-arrow admin-cat-rename admin-cat-icon" data-category-id="${cat.id}" aria-label="Preimenuj">✎</button>` +
+          `<button class="btn-icon-arrow admin-cat-delete admin-cat-icon" data-category-id="${cat.id}" aria-label="Obriši">×</button>` +
           `<span class="admin-cat-arrow">${arrowSymbol}</span>` +
         `</div>`;
 
@@ -585,17 +587,18 @@
         `<div class="admin-cat-body" style="${bodyStyle}">` +
           (variantRows
             ? `<div class="admin-var-list">${variantRows}</div>`
-            : '<span class="admin-no-variants">Nema šifri</span>') +
+            : '<span class="admin-no-variants">Nema proizvoda</span>') +
           `<div class="admin-cat-actions">` +
-            `<button class="btn btn--ghost admin-cat-rename" data-category-id="${cat.id}" aria-label="Preimenuj">Preimenuj</button>` +
-            `<button class="btn btn--ghost admin-cat-add-variant" data-category-id="${cat.id}" aria-label="Dodaj šifru">+ Šifra</button>` +
-            `<button class="btn btn--danger admin-cat-delete" data-category-id="${cat.id}" aria-label="Obriši kategoriju">Obriši</button>` +
+            `<button class="btn btn--ghost admin-cat-add-variant" data-category-id="${cat.id}" aria-label="Dodaj šifru">+ Proizvod</button>` +
           `</div>` +
         `</div>`;
 
       card.innerHTML = headerHtml + bodyHtml;
 
-      card.querySelector('.admin-cat-summary').addEventListener('click', () => {
+      card.querySelector('.admin-cat-summary').addEventListener('click', (e) => {
+        // Don't toggle if clicking on action buttons
+        if (e.target.closest('.admin-cat-rename, .admin-cat-delete')) return;
+        
         const body = card.querySelector('.admin-cat-body');
         const arrow = card.querySelector('.admin-cat-arrow');
         const expanded = body.style.display !== 'none';
