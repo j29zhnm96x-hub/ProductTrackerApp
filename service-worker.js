@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stand-tracker-v1';
+const CACHE_NAME = 'stand-tracker-v2';
 
 const PRE_CACHE = [
   '/',

@@ -373,18 +373,23 @@
       card.dataset.variantId = v.id;
 
       card.innerHTML =
-        `<div class="variant-card-top">` +
-          `<span class="variant-card-info">${escHtml(cat.name)} <span class="variant-card-code">${escHtml(code)}</span></span>` +
-          `<div class="variant-card-actions">` +
-            `<button class="btn--add btn--counter-plus" data-category-id="${categoryId}" data-variant-id="${v.id}" data-type="${currentType}" aria-label="Dodaj">+</button>` +
+        `<div class="variant-row">` +
+          `<div class="variant-row__text">` +
+            `<div class="variant-row__title">` +
+              `<span class="variant-row__name">${escHtml(cat.name)}</span>` +
+              `<span class="variant-row__code">${escHtml(code)}</span>` +
+            `</div>` +
             (qty > 0
-              ? `<button class="btn--subtract btn--counter-minus" data-category-id="${categoryId}" data-variant-id="${v.id}" data-type="${currentType}" aria-label="Smanji">−</button>`
+              ? `<span class="variant-row__qty${pulseClass}">×${qty}</span>`
               : '') +
           `</div>` +
-        `</div>` +
-        (qty > 0
-          ? `<span class="variant-card-qty${pulseClass}">×${qty}</span>`
-          : '');
+          `<div class="variant-row__actions">` +
+            (qty > 0
+              ? `<button type="button" class="var-btn var-btn--minus btn--counter-minus" data-category-id="${categoryId}" data-variant-id="${v.id}" data-type="${currentType}" aria-label="Smanji">−</button>`
+              : '') +
+            `<button type="button" class="var-btn var-btn--plus btn--counter-plus" data-category-id="${categoryId}" data-variant-id="${v.id}" data-type="${currentType}" aria-label="Dodaj">+</button>` +
+          `</div>` +
+        `</div>`;
 
       dom.varGrid.appendChild(card);
     });
