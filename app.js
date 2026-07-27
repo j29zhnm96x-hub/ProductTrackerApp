@@ -52,7 +52,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.21';
+  const VERSION = '1.0.22';
 
   // --------------- STATE ---------------
   let data = null;
@@ -1063,6 +1063,11 @@
    * =================================================================== */
 
   async function checkForUpdate() {
+    if (!navigator.onLine) {
+      dom.setUpdateStatus.textContent = 'Niste spojeni na internet.';
+      return;
+    }
+
     dom.setUpdateStatus.textContent = 'Provjeravam ažuriranja...';
 
     try {

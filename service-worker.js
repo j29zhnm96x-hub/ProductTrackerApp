@@ -6,7 +6,11 @@ const PRE_CACHE = [
   '/styles.css',
   '/app.js',
   '/manifest.json',
-  '/version.json'
+  '/version.json',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
+  '/icons/icon.png',
+  '/icons/apple-touch-icon.png'
 ];
 
 // Install: pre-cache core assets
