@@ -57,7 +57,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.23';
+  const VERSION = '1.0.24';
 
   // --------------- STATE ---------------
   let data = null;
@@ -366,6 +366,31 @@
     updateDate();
     const hasItems = data.currentSession.items.length > 0;
     dom.navShare.disabled = !hasItems;
+
+    // Update badges on home buttons
+    const ulazTotal = data.currentSession.items
+      .filter(i => i.type === 'ulaz')
+      .reduce((s, i) => s + i.quantity, 0);
+    const otpisTotal = data.currentSession.items
+      .filter(i => i.type === 'otpis')
+      .reduce((s, i) => s + i.quantity, 0);
+
+    updateHomeBadge(dom.homeBtnUlaz, ulazTotal);
+    updateHomeBadge(dom.homeBtnOtpis, otpisTotal);
+  }
+
+  function updateHomeBadge(btn, total) {
+    let badge = btn.querySelector('.home-badge');
+    if (total > 0) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'home-badge';
+        btn.appendChild(badge);
+      }
+      badge.textContent = total;
+    } else if (badge) {
+      badge.remove();
+    }
   }
 
   function updateDate() {
@@ -844,6 +869,7 @@
     // Re-render to handle counter show/hide and pulse animation
     renderVariants(catId, varId);
     updateCategoryBadge(catId, type);
+    renderHome();
   }
 
   // Show toast notification if netting occurred
