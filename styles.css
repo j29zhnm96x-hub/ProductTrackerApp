@@ -1131,14 +1131,9 @@ svg {
 }
 
 /* ---- HOME SETTINGS BUTTON ---- */
-.home-settings-btn {
-  position: absolute;
-  top: 50%;
-  right: 0;
-  transform: translateY(-50%);
+.home-settings-btn,
+.header-settings-btn {
   font-size: 1.25rem;
-  width: 28px;
-  height: 28px;
   min-width: 28px;
   min-height: 28px;
   padding: 0;
@@ -1147,13 +1142,29 @@ svg {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
-.home-settings-btn:hover {
+/* Home: absolute positioned in non-flex header */
+.home-settings-btn {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+}
+
+/* Non-home: sits naturally in flex header */
+.header-settings-btn {
+  margin-left: auto;
+}
+
+.home-settings-btn:hover,
+.header-settings-btn:hover {
   background: var(--bg-surface-hover);
 }
 
-.home-settings-btn:active {
+.home-settings-btn:active,
+.header-settings-btn:active {
   background: var(--bg-surface-press);
 }
 
