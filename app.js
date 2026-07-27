@@ -57,7 +57,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.25';
+  const VERSION = '1.0.26';
 
   // --------------- STATE ---------------
   let data = null;
@@ -1175,12 +1175,14 @@
     // Back buttons
     dom.catBack.addEventListener('click', goHome);
     dom.varBack.addEventListener('click', () => {
-      // If we came from categories or home
       popView();
       renderCategories(currentType);
     });
     dom.histBack.addEventListener('click', goHome);
     dom.adminBack.addEventListener('click', goHome);
+
+    // Long-press back → jump to Home
+    [dom.catBack, dom.varBack, dom.histBack, dom.adminBack].forEach(setupLongPress);
 
     // Category add button
     dom.catAddBtn.addEventListener('click', () => {
@@ -1224,6 +1226,32 @@
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  /** Long-press on back button → jump to Home. Short tap → normal back. */
+  function setupLongPress(btn) {
+    let timer = null;
+    let wasLong = false;
+
+    btn.addEventListener('pointerdown', (e) => {
+      wasLong = false;
+      timer = setTimeout(() => {
+        wasLong = true;
+        goHome();
+      }, 500);
+    });
+
+    btn.addEventListener('pointerup', () => {
+      clearTimeout(timer);
+      if (wasLong) {
+        // Prevent the click handler from also firing
+        btn.style.pointerEvents = 'none';
+        setTimeout(() => { btn.style.pointerEvents = ''; }, 50);
+      }
+    });
+
+    btn.addEventListener('pointerleave', () => clearTimeout(timer));
+    btn.addEventListener('pointercancel', () => clearTimeout(timer));
   }
 
   /* ===================================================================
