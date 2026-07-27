@@ -52,7 +52,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.16';
+  const VERSION = '1.0.17';
 
   // --------------- STATE ---------------
   let data = null;
@@ -1182,6 +1182,12 @@
 
     // Wire up all event listeners
     wireEvents();
+
+    // Persist session on app close / background
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) saveData(data);
+    });
+    window.addEventListener('pagehide', () => saveData(data));
 
     // Register service worker
     registerServiceWorker();
