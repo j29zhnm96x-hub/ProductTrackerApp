@@ -52,7 +52,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.15';
+  const VERSION = '1.0.16';
 
   // --------------- STATE ---------------
   let data = null;
@@ -150,7 +150,8 @@
     return item ? item.quantity : 0;
   }
 
-  /** Add or subtract quantity (min 0). Remove item if quantity reaches 0. */
+  /** Add or subtract quantity (min 0). Remove item if quantity reaches 0.
+   *  Automatically nets ULAZ and OTPIS for the same product. */
   function updateQuantity(categoryId, variantId, type, delta) {
     let item = findItem(categoryId, variantId, type);
 
@@ -169,8 +170,31 @@
       );
     }
 
+    // Net ULAZ vs OTPIS — keep only the larger side
+    const otherType = type === 'ulaz' ? 'otpis' : 'ulaz';
+    const other = findItem(categoryId, variantId, otherType);
+    if (other && item.quantity > 0) {
+      const net = item.quantity - other.quantity;
+      if (net > 0) {
+        item.quantity = net;
+        data.currentSession.items = data.currentSession.items.filter(
+          (i) => !(i.categoryId === categoryId && i.variantId === variantId && i.type === otherType)
+        );
+      } else if (net < 0) {
+        other.quantity = -net;
+        data.currentSession.items = data.currentSession.items.filter(
+          (i) => !(i.categoryId === categoryId && i.variantId === variantId && i.type === type)
+        );
+      } else {
+        // net === 0 — remove both
+        data.currentSession.items = data.currentSession.items.filter(
+          (i) => !(i.categoryId === categoryId && i.variantId === variantId)
+        );
+      }
+    }
+
     saveData(data);
-    return item.quantity;
+    return item.quantity > 0 ? item.quantity : (other ? other.quantity : 0);
   }
 
   /** Sum all variant quantities for a category+type combo. */
