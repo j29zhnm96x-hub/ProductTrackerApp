@@ -52,7 +52,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.19';
+  const VERSION = '1.0.20';
 
   // --------------- STATE ---------------
   let data = null;
@@ -151,12 +151,13 @@
   }
 
   /** Add or subtract quantity (min 0). Remove item if quantity reaches 0.
-   *  Automatically nets ULAZ and OTPIS for the same product. */
+   *  Automatically nets ULAZ and OTPIS for the same product.
+   *  Returns { qty, netted, netMessage }. */
   function updateQuantity(categoryId, variantId, type, delta) {
     let item = findItem(categoryId, variantId, type);
 
     if (!item) {
-      if (delta <= 0) return 0; // nothing to decrement
+      if (delta <= 0) return { qty: 0, netted: false };
       item = { categoryId, variantId, type, quantity: 0 };
       data.currentSession.items.push(item);
     }
@@ -171,9 +172,19 @@
     }
 
     // Net ULAZ vs OTPIS — keep only the larger side
+    let netted = false;
+    let netMessage = '';
     const otherType = type === 'ulaz' ? 'otpis' : 'ulaz';
     const other = findItem(categoryId, variantId, otherType);
     if (other && item.quantity > 0) {
+      const cat = findCategory(categoryId);
+      const v = findVariant(categoryId, variantId);
+      const prodName = cat && v ? `${cat.name} ${getVariantLabel(v)}` : 'Proizvod';
+      netted = true;
+      netMessage = type === 'ulaz'
+        ? `${prodName} poništen — postoji u otpisu`
+        : `${prodName} poništen — postoji u ulazu`;
+      
       const net = item.quantity - other.quantity;
       if (net > 0) {
         item.quantity = net;
@@ -186,7 +197,6 @@
           (i) => !(i.categoryId === categoryId && i.variantId === variantId && i.type === type)
         );
       } else {
-        // net === 0 — remove both
         data.currentSession.items = data.currentSession.items.filter(
           (i) => !(i.categoryId === categoryId && i.variantId === variantId)
         );
@@ -194,7 +204,8 @@
     }
 
     saveData(data);
-    return item.quantity > 0 ? item.quantity : (other ? other.quantity : 0);
+    const finalQty = item.quantity > 0 ? item.quantity : (other ? other.quantity : 0);
+    return { qty: finalQty, netted, netMessage };
   }
 
   /** Sum all variant quantities for a category+type combo. */
@@ -821,11 +832,24 @@
     const type = btn.dataset.type;
     const delta = btn.classList.contains('btn--counter-plus') ? 1 : -1;
 
-    updateQuantity(catId, varId, type, delta);
+    const result = updateQuantity(catId, varId, type, delta);
+
+    if (result.netted) showToast(result.netMessage);
 
     // Re-render to handle counter show/hide and pulse animation
     renderVariants(catId, varId);
     updateCategoryBadge(catId, type);
+  }
+
+  // Show toast notification if netting occurred
+  let toastTimer = null;
+  function showToast(msg) {
+    if (toastTimer) clearTimeout(toastTimer);
+    const el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('toast--show');
+    toastTimer = setTimeout(() => el.classList.remove('toast--show'), 2500);
   }
 
   function updateCategoryBadge(categoryId, type) {

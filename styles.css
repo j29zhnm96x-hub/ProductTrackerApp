@@ -218,6 +218,32 @@ svg {
   background: var(--bg-surface-press);
 }
 
+/* ---- TOAST ---- */
+.toast {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 90vw;
+  padding: 10px 20px;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 8px;
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.toast--show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(4px);
+}
+
 /* ---- HOME CARDS ---- */
 .home-cards {
   flex: 1;
