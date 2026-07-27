@@ -132,7 +132,7 @@
       <h2 class="settings-section__title">Ažuriranje</h2>
       <button id="set-check-update" class="settings-btn">Provjeri ažuriranja</button>
       <p id="set-update-status" class="settings-info"></p>
-      <p class="settings-info">Verzija: v1.0.22</p>
+      <p class="settings-info">Verzija: v1.0.23</p>
     </div>
 
     <div class="settings-section">
@@ -147,6 +147,18 @@
       <p class="settings-info">Stand Tracker — Praćenje ulaza i otpisa proizvoda na štandu</p>
     </div>
   </section>
+
+  <!-- ===== CONFIRM MODAL ===== -->
+  <div id="confirm-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-box">
+      <h2 class="modal-title">Pregled spiska</h2>
+      <pre id="confirm-report" class="modal-report"></pre>
+      <div class="modal-actions">
+        <button id="confirm-cancel" class="btn btn--ghost">Odustani</button>
+        <button id="confirm-send" class="btn btn--primary">Pošalji i zaključi</button>
+      </div>
+    </div>
+  </div>
 
   <script src="app.js" defer></script>
 </body>

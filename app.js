@@ -47,12 +47,17 @@
     setImport:     $('#set-import'),
     setUpdateStatus: $('#set-update-status'),
     setDataStatus: $('#set-data-status'),
+    // Confirm modal
+    confirmModal:   $('#confirm-modal'),
+    confirmReport:  $('#confirm-report'),
+    confirmCancel:  $('#confirm-cancel'),
+    confirmSend:    $('#confirm-send'),
     homeBtnSettings: $('#home-btn-settings'),
   };
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.22';
+  const VERSION = '1.0.23';
 
   // --------------- STATE ---------------
   let data = null;
@@ -888,12 +893,19 @@
    *  SHARE & RESET ("Pošalji i zaključi")
    * =================================================================== */
 
-  async function shareAndReset() {
+  function showSharePreview() {
     if (data.currentSession.items.length === 0) {
       alert('Nema stavki za slanje.');
       return;
     }
 
+    const reportText = buildFullReport();
+    dom.confirmReport.textContent = reportText;
+    dom.confirmModal.style.display = 'flex';
+  }
+
+  async function confirmShareAndReset() {
+    dom.confirmModal.style.display = 'none';
     const reportText = buildFullReport();
 
     try {
@@ -903,9 +915,8 @@
           text: reportText,
         });
       } else {
-        // Fallback: copy to clipboard
         await navigator.clipboard.writeText(reportText);
-        alert('Tekst kopiran u međuspremnik. Web Share API nije dostupan.');
+        alert('Tekst kopiran u međuspremnik.');
       }
 
       // Move current session to history — use today as the date
@@ -923,19 +934,19 @@
       };
       saveData(data);
 
-      // Navigate home and confirm
       goHome();
       renderHome();
-
-      // Brief confirmation — let the home view speak for itself
       showBriefConfirmation();
     } catch (err) {
-      // User cancelled share — don't reset
       if (err.name !== 'AbortError') {
         console.error('Greška pri dijeljenju:', err);
         alert('Greška pri slanju. Pokušajte ponovo.');
       }
     }
+  }
+
+  function cancelShare() {
+    dom.confirmModal.style.display = 'none';
   }
 
   function showBriefConfirmation() {
@@ -1133,7 +1144,7 @@
     // Navigation
     dom.navHistory.addEventListener('click', goHistory);
     dom.navAdmin.addEventListener('click', goAdmin);
-    dom.navShare.addEventListener('click', shareAndReset);
+    dom.navShare.addEventListener('click', showSharePreview);
 
     // Back buttons
     dom.catBack.addEventListener('click', goHome);
@@ -1169,6 +1180,10 @@
     dom.setCheckUpdate.addEventListener('click', checkForUpdate);
     dom.setExport.addEventListener('click', exportData);
     dom.setImport.addEventListener('click', importData);
+
+    // Confirm modal
+    dom.confirmCancel.addEventListener('click', cancelShare);
+    dom.confirmSend.addEventListener('click', confirmShareAndReset);
 
     // Admin event delegation (once)
     bindAdminEvents();
