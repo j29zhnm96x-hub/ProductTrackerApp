@@ -52,7 +52,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.18';
+  const VERSION = '1.0.19';
 
   // --------------- STATE ---------------
   let data = null;
@@ -477,7 +477,7 @@
 
       card.innerHTML =
         `<div class="history-summary">` +
-          `<span class="history-date">${dateFormatted} ${timeFormatted}</span>` +
+          `<span class="history-date">${dateFormatted} ${timeFormatted} - </span>` +
           `<span class="history-totals">ULAZ: ${ulazTotal} | OTPIS: ${otpisTotal}</span>` +
         `</div>` +
         `<div class="history-detail" style="display:none;"></div>`;
