@@ -52,7 +52,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.17';
+  const VERSION = '1.0.18';
 
   // --------------- STATE ---------------
   let data = null;
@@ -884,9 +884,9 @@
         alert('Tekst kopiran u međuspremnik. Web Share API nije dostupan.');
       }
 
-      // Move current session to history
+      // Move current session to history — use today as the date
       const historyEntry = {
-        date: data.currentSession.date,
+        date: getToday(),
         sentAt: Date.now(),
         items: [...data.currentSession.items],
       };
@@ -1169,16 +1169,7 @@
       localStorage.setItem('stand-tracker-version', VERSION);
     }
 
-    // Check if currentSession date matches today
-    const today = getToday();
-    if (data.currentSession.date !== today) {
-      // New day — fresh session, preserve categories
-      data.currentSession = {
-        date: today,
-        items: [],
-      };
-      saveData(data);
-    }
+    // Session persists until manually closed — no auto-reset at midnight
 
     // Wire up all event listeners
     wireEvents();
