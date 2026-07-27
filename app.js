@@ -52,7 +52,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.20';
+  const VERSION = '1.0.21';
 
   // --------------- STATE ---------------
   let data = null;

@@ -221,9 +221,9 @@ svg {
 /* ---- TOAST ---- */
 .toast {
   position: fixed;
-  top: 16px;
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, -50%);
   max-width: 90vw;
   padding: 10px 20px;
   background: var(--accent);
@@ -241,7 +241,6 @@ svg {
 
 .toast--show {
   opacity: 1;
-  transform: translateX(-50%) translateY(4px);
 }
 
 /* ---- HOME CARDS ---- */
