@@ -432,10 +432,12 @@ svg {
 /* ---- THEME: ULAZ (green) / OTPIS (red) ---- */
 .theme-ulaz {
   border-top: 4px solid var(--color-ulaz);
+  background: linear-gradient(180deg, rgba(90,158,111,0.06) 0%, rgba(90,158,111,0.02) 100%);
 }
 
 .theme-otpis {
   border-top: 4px solid var(--color-otpis);
+  background: linear-gradient(180deg, rgba(196,77,77,0.06) 0%, rgba(196,77,77,0.02) 100%);
 }
 
 .theme-ulaz .header__title {
