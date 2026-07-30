@@ -464,6 +464,16 @@ svg {
   letter-spacing: 0.04em;
 }
 
+.theme-ulaz .variant-row__code,
+.theme-ulaz .variant-row__qty {
+  color: var(--color-ulaz);
+}
+
+.theme-otpis .variant-row__code,
+.theme-otpis .variant-row__qty {
+  color: var(--color-otpis);
+}
+
 /* ---- VARIANT CARDS (single full-width row) ---- */
 .card--variant {
   display: block;
