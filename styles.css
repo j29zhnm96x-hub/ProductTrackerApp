@@ -464,13 +464,11 @@ svg {
   letter-spacing: 0.04em;
 }
 
-.theme-ulaz .variant-row__code,
-.theme-ulaz .variant-row__qty {
+.theme-ulaz .variant-row__name {
   color: var(--color-ulaz);
 }
 
-.theme-otpis .variant-row__code,
-.theme-otpis .variant-row__qty {
+.theme-otpis .variant-row__name {
   color: var(--color-otpis);
 }
 
