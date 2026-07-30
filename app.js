@@ -52,12 +52,14 @@
     confirmReport:  $('#confirm-report'),
     confirmCancel:  $('#confirm-cancel'),
     confirmSend:    $('#confirm-send'),
+    confirmUlaz:    $('#confirm-ulaz'),
+    confirmOtpis:   $('#confirm-otpis'),
     homeBtnSettings: $('#home-btn-settings'),
   };
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.31';
+  const VERSION = '1.0.32';
 
   // --------------- STATE ---------------
   let data = null;
@@ -605,13 +607,18 @@
   }
 
   /** Build the full report with header. */
-  function buildFullReport() {
+  function buildFullReport(includeUlaz, includeOtpis) {
     const today = getToday();
     const [y, m, d] = today.split('-');
     const dateStr = `${d}.${m}.${y}.`;
-    const body = buildReportText(data.currentSession.items);
-    if (!body) return `Stand Tracker — ${dateStr}\n\nNema stavki.`;
-    return `Stand Tracker — ${dateStr}\n\n${body}`;
+    const filtered = data.currentSession.items.filter(i => {
+      if (i.type === 'ulaz' && includeUlaz) return true;
+      if (i.type === 'otpis' && includeOtpis) return true;
+      return false;
+    });
+    const body = buildReportText(filtered);
+    if (!body) return `UlazOtpis — ${dateStr}\n\nNema stavki.`;
+    return `UlazOtpis — ${dateStr}\n\n${body}`;
   }
 
   // --------------- ADMIN ---------------
@@ -936,39 +943,47 @@
       return;
     }
 
-    const reportText = buildFullReport();
+    dom.confirmUlaz.checked = true;
+    dom.confirmOtpis.checked = true;
+
+    const reportText = buildFullReport(true, true);
     dom.confirmReport.textContent = reportText;
     dom.confirmModal.style.display = 'flex';
   }
 
   async function confirmShareAndReset() {
+    const includeUlaz = dom.confirmUlaz.checked;
+    const includeOtpis = dom.confirmOtpis.checked;
+
+    if (!includeUlaz && !includeOtpis) return;
+
     dom.confirmModal.style.display = 'none';
-    const reportText = buildFullReport();
+    const reportText = buildFullReport(includeUlaz, includeOtpis);
 
     try {
       if (navigator.share) {
-        await navigator.share({
-          title: 'Stand Tracker',
-          text: reportText,
-        });
+        await navigator.share({ title: 'UlazOtpis', text: reportText });
       } else {
         await navigator.clipboard.writeText(reportText);
         alert('Tekst kopiran u međuspremnik.');
       }
 
-      // Move current session to history — use today as the date
-      const historyEntry = {
-        date: getToday(),
-        sentAt: Date.now(),
-        items: [...data.currentSession.items],
-      };
-      data.history.push(historyEntry);
+      // Move only selected types to history
+      const selected = data.currentSession.items.filter(i => {
+        if (i.type === 'ulaz' && includeUlaz) return true;
+        if (i.type === 'otpis' && includeOtpis) return true;
+        return false;
+      });
+      if (selected.length > 0) {
+        data.history.push({ date: getToday(), sentAt: Date.now(), items: selected });
+      }
 
-      // Reset session
-      data.currentSession = {
-        date: getToday(),
-        items: [],
-      };
+      // Keep unselected types
+      data.currentSession.items = data.currentSession.items.filter(i => {
+        if (i.type === 'ulaz' && includeUlaz) return false;
+        if (i.type === 'otpis' && includeOtpis) return false;
+        return true;
+      });
       saveData(data);
 
       goHome();

@@ -276,6 +276,28 @@ svg {
   color: var(--text-primary);
 }
 
+.modal-toggles {
+  display: flex;
+  gap: 16px;
+}
+
+.modal-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.modal-toggle input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
 .modal-report {
   font-size: 0.875rem;
   color: var(--text-secondary);

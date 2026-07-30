@@ -9,7 +9,7 @@
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="styles.css">
-  <title>Stand Tracker</title>
+  <title>UlazOtpis</title>
 </head>
 <body>
   <div id="toast" class="toast"></div>
@@ -17,7 +17,7 @@
   <!-- ===== VIEW 1: HOME ===== -->
   <section id="app-home" class="view view--active">
     <header class="header">
-      <h1 class="header__title">Stand Tracker</h1>
+      <h1 class="header__title">UlazOtpis</h1>
       <p id="current-date" class="header__date"></p>
       <button id="home-btn-settings" class="btn btn--icon home-settings-btn" aria-label="Postavke">⚙</button>
     </header>
@@ -136,7 +136,7 @@
       <h2 class="settings-section__title">Ažuriranje</h2>
       <button id="set-check-update" class="settings-btn">Provjeri ažuriranja</button>
       <p id="set-update-status" class="settings-info"></p>
-      <p class="settings-info">Verzija: v1.0.31</p>
+      <p class="settings-info">Verzija: v1.0.32</p>
     </div>
 
     <div class="settings-section">
@@ -156,6 +156,14 @@
   <div id="confirm-modal" class="modal-overlay" style="display:none;">
     <div class="modal-box">
       <h2 class="modal-title">Pregled spiska</h2>
+      <div class="modal-toggles">
+        <label class="modal-toggle">
+          <input type="checkbox" id="confirm-ulaz" checked> Zaključi ULAZ
+        </label>
+        <label class="modal-toggle">
+          <input type="checkbox" id="confirm-otpis" checked> Zaključi OTPIS
+        </label>
+      </div>
       <pre id="confirm-report" class="modal-report"></pre>
       <div class="modal-actions">
         <button id="confirm-cancel" class="btn btn--ghost">Odustani</button>
