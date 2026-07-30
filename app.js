@@ -57,7 +57,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.26';
+  const VERSION = '1.0.27';
 
   // --------------- STATE ---------------
   let data = null;
@@ -300,7 +300,9 @@
 
   /** Show a view by its section ID, hiding all others. */
   function showView(viewId) {
-    dom.allViews.forEach((v) => v.classList.remove('view--active'));
+    dom.allViews.forEach((v) => {
+      v.classList.remove('view--active', 'theme-ulaz', 'theme-otpis');
+    });
     const target = document.getElementById(viewId);
     if (target) target.classList.add('view--active');
     currentView = viewId.replace('app-', '');
@@ -328,6 +330,7 @@
     currentCategoryId = null;
     pushView('app-categories');
     renderCategories(type);
+    applyTheme(type);
   }
 
   function goVariants(categoryId) {
@@ -339,6 +342,14 @@
     dom.varSubtitle.textContent = currentType === 'ulaz' ? 'ULAZ' : 'OTPIS';
     pushView('app-variants');
     renderVariants(categoryId);
+    applyTheme(currentType);
+  }
+
+  function applyTheme(type) {
+    const activeView = document.querySelector('.view--active');
+    if (activeView && type) {
+      activeView.classList.add(type === 'ulaz' ? 'theme-ulaz' : 'theme-otpis');
+    }
   }
 
   function goHistory() {
