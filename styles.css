@@ -450,14 +450,16 @@ svg {
 
 .theme-ulaz .header__subtitle {
   color: var(--color-ulaz);
-  font-weight: 600;
-  font-size: 0.9375rem;
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: 0.04em;
 }
 
 .theme-otpis .header__subtitle {
   color: var(--color-otpis);
-  font-weight: 600;
-  font-size: 0.9375rem;
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: 0.04em;
 }
 
 /* ---- VARIANT CARDS (single full-width row) ---- */
