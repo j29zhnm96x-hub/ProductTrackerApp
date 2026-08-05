@@ -59,7 +59,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.32';
+  const VERSION = '1.0.33';
 
   // --------------- STATE ---------------
   let data = null;
@@ -425,7 +425,11 @@
       dom.catGrid.style.display = '';
     }
 
-    data.categories.forEach((cat) => {
+    const sortedCats = [...data.categories].sort((a, b) =>
+      a.name.toLowerCase().localeCompare(b.name.toLowerCase(), 'hr')
+    );
+
+    sortedCats.forEach((cat) => {
       const total = getCategoryTotal(cat.id, type);
       const card = document.createElement('button');
       card.className = 'card card--category' + (total > 0 ? ' card--has-items' : '');
@@ -457,7 +461,11 @@
         '<p class="empty-state">Nema proizvoda za ovu kategoriju.</p>';
     }
 
-    cat.variants.forEach((v) => {
+    const sortedVariants = [...cat.variants].sort((a, b) =>
+      getVariantLabel(a).localeCompare(getVariantLabel(b), 'hr', { numeric: true })
+    );
+
+    sortedVariants.forEach((v) => {
       const qty = getItemQuantity(categoryId, v.id, currentType);
       const code = getVariantLabel(v);
       const pulseClass = (v.id === pulseVariantId) ? ' counter--pulse' : '';
@@ -593,11 +601,26 @@
       grouped[i.categoryId].push(i);
     });
 
+    // Sort categories alphabetically by name
+    const catIds = Object.keys(grouped).sort((a, b) => {
+      const nameA = (findCategory(a) || { name: '' }).name.toLowerCase();
+      const nameB = (findCategory(b) || { name: '' }).name.toLowerCase();
+      return nameA.localeCompare(nameB, 'hr');
+    });
+
     const lines = [];
-    Object.keys(grouped).forEach((catId) => {
+    catIds.forEach((catId) => {
       const cat = findCategory(catId);
       const catName = cat ? cat.name : 'Nepoznato';
-      grouped[catId].forEach((item) => {
+      // Sort variants by code within category
+      const items2 = [...grouped[catId]].sort((a, b) => {
+        const va = findVariant(catId, a.variantId);
+        const vb = findVariant(catId, b.variantId);
+        const codeA = va ? getVariantLabel(va) : '';
+        const codeB = vb ? getVariantLabel(vb) : '';
+        return codeA.localeCompare(codeB, 'hr', { numeric: true });
+      });
+      items2.forEach((item) => {
         const v = findVariant(catId, item.variantId);
         const codeLabel = v ? getVariantLabel(v) : '?';
         lines.push(`${catName} ${codeLabel}: ${item.quantity} kom`);
@@ -631,7 +654,11 @@
       return;
     }
 
-    data.categories.forEach((cat) => {
+    const sortedCats = [...data.categories].sort((a, b) =>
+      a.name.toLowerCase().localeCompare(b.name.toLowerCase(), 'hr')
+    );
+
+    sortedCats.forEach((cat) => {
       const card = document.createElement('div');
       card.className = 'card card--admin';
       card.dataset.catId = cat.id;
