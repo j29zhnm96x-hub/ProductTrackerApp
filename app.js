@@ -64,7 +64,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.35';
+  const VERSION = '1.0.36';
 
   // --------------- STATE ---------------
   let data = null;
@@ -1163,7 +1163,11 @@
   function confirmImport() {
     if (!pendingImportJson) return;
     dom.importModal.style.display = 'none';
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(pendingImportJson));
+    // CRITICAL: update in-memory data BEFORE reload, otherwise the
+    // pagehide/visibilitychange save handler overwrites the imported
+    // data with the stale in-memory state.
+    data = pendingImportJson;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     pendingImportJson = null;
     dom.setDataStatus.textContent = 'Podaci uvezeni. Aplikacija će se osvježiti.';
     setTimeout(() => location.reload(), 800);
