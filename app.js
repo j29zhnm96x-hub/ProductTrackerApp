@@ -70,7 +70,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.37';
+  const VERSION = '1.0.38';
 
   // --------------- STATE ---------------
   let data = null;
@@ -1015,7 +1015,16 @@
       `${cat.name} ${getVariantLabel(v)} — ${type === 'ulaz' ? 'ULAZ' : 'OTPIS'}`;
     dom.quickaddInput.value = '';
     dom.quickaddModal.style.display = 'flex';
-    setTimeout(() => dom.quickaddInput.focus(), 100);
+
+    // iOS: input must be visible before focus() can raise the numpad.
+    // Try multiple passes since focus outside a user-gesture can be ignored.
+    [0, 120, 350].forEach((ms) => {
+      setTimeout(() => {
+        if (dom.quickaddModal.style.display === 'flex') {
+          dom.quickaddInput.focus();
+        }
+      }, ms);
+    });
   }
 
   function confirmQuickAdd() {
