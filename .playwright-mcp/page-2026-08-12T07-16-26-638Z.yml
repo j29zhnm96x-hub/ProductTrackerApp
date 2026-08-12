@@ -1,0 +1,16 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - heading "UlazOtpis" [level=1] [ref=e4]
+      - paragraph [ref=e5]: 12.08.2026.
+      - button "Postavke" [ref=e6] [cursor=pointer]: ⚙
+    - generic [ref=e7]:
+      - button "ULAZ" [ref=e8] [cursor=pointer]:
+        - generic [ref=e9]: ↑
+      - button "OTPIS" [ref=e11] [cursor=pointer]:
+        - generic [ref=e12]: ↓
+    - generic [ref=e14]:
+      - button "☰ Povijest" [ref=e15] [cursor=pointer]
+      - button "⚙ Proizvodi" [ref=e16] [cursor=pointer]
+      - button "✓ Pošalji i zaključi" [disabled]
+  - button [ref=e17]

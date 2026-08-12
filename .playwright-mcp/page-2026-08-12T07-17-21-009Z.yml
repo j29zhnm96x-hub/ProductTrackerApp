@@ -1,0 +1,20 @@
+- generic [active] [ref=f1e1]:
+  - text: ☰ ⚙ ✓
+  - generic [ref=f1e18]:
+    - generic [ref=f1e19]:
+      - button "← Nazad" [ref=f1e20] [cursor=pointer]
+      - heading "Postavke" [level=1] [ref=f1e21]
+    - generic [ref=f1e22]:
+      - heading "Ažuriranje" [level=2] [ref=f1e23]
+      - button "Provjeri ažuriranja" [ref=f1e24] [cursor=pointer]
+      - paragraph
+      - paragraph [ref=f1e25]: "Verzija: v1.0.34"
+    - generic [ref=f1e26]:
+      - heading "Podaci" [level=2] [ref=f1e27]
+      - button "Izvezi podatke" [ref=f1e28] [cursor=pointer]
+      - button "Uvezi podatke" [ref=f1e29] [cursor=pointer]
+      - paragraph
+    - generic [ref=f1e30]:
+      - heading "Info" [level=2] [ref=f1e31]
+      - paragraph [ref=f1e32]: Stand Tracker — Praćenje ulaza i otpisa proizvoda na štandu
+  - button [ref=f1e17]

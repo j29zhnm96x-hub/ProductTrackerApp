@@ -54,12 +54,17 @@
     confirmSend:    $('#confirm-send'),
     confirmUlaz:    $('#confirm-ulaz'),
     confirmOtpis:   $('#confirm-otpis'),
+    // Import modal
+    importModal:    $('#import-modal'),
+    importModalInfo:$('#import-modal-info'),
+    importCancel:   $('#import-cancel'),
+    importConfirm:  $('#import-confirm'),
     homeBtnSettings: $('#home-btn-settings'),
   };
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.34';
+  const VERSION = '1.0.35';
 
   // --------------- STATE ---------------
   let data = null;
@@ -1076,7 +1081,7 @@
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const today = getToday();
-    const filename = `stand-tracker-backup-${today}.json`;
+    const filename = `ulaz-otpis-backup-${today}.json`;
 
     const a = document.createElement('a');
     a.href = url;
@@ -1084,7 +1089,9 @@
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+
+    // iOS fix: revoke AFTER download has started, not immediately
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
 
     dom.setDataStatus.textContent = 'Podaci izvezeni.';
   }
@@ -1099,6 +1106,8 @@
     input.value = '';
     input.click();
   }
+
+  let pendingImportJson = null;
 
   function handleImportChange(e) {
     const file = e.target.files[0];
@@ -1123,7 +1132,7 @@
           throw new Error('Neispravna struktura: nedostaje "history" niz.');
         }
 
-        // Sanitize: ensure categories have variants array, items have required fields
+        // Sanitize: ensure categories have variants array
         json.categories = json.categories.map(c => ({
           id: c.id || 'cat_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9),
           name: c.name || 'Nepoznato',
@@ -1133,17 +1142,36 @@
           })) : []
         }));
 
-        if (!confirm('Uvoz će zamijeniti sve postojeće podatke. Nastaviti?')) return;
+        pendingImportJson = json;
 
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(json));
-        dom.setDataStatus.textContent = 'Podaci uvezeni. Aplikacija će se osvježiti.';
-        setTimeout(() => location.reload(), 1000);
+        const catCount = json.categories.length;
+        const varCount = json.categories.reduce((s, c) => s + c.variants.length, 0);
+        const histCount = json.history.length;
+        dom.importModalInfo.textContent =
+          `Kategorije: ${catCount}\nProizvodi (šifre): ${varCount}\nPovijest: ${histCount} zapisa\n\n` +
+          'Uvoz će zamijeniti sve postojeće podatke u ovoj aplikaciji.';
+
+        dom.importModal.style.display = 'flex';
       } catch (err) {
         alert('Greška pri uvozu: ' + err.message);
       }
     };
-    reader.onerror = () => alert('Greška pri čitanju datoteke.');
+    reader.onerror = () => alert('Greška pri čitanju datoteke. Provjerite je li fajl ispravan.');
     reader.readAsText(file);
+  }
+
+  function confirmImport() {
+    if (!pendingImportJson) return;
+    dom.importModal.style.display = 'none';
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(pendingImportJson));
+    pendingImportJson = null;
+    dom.setDataStatus.textContent = 'Podaci uvezeni. Aplikacija će se osvježiti.';
+    setTimeout(() => location.reload(), 800);
+  }
+
+  function cancelImport() {
+    dom.importModal.style.display = 'none';
+    pendingImportJson = null;
   }
 
   /* ===================================================================
@@ -1262,6 +1290,10 @@
 
     // Persistent file input handler
     document.getElementById('import-file').addEventListener('change', handleImportChange);
+
+    // Import modal
+    dom.importConfirm.addEventListener('click', confirmImport);
+    dom.importCancel.addEventListener('click', cancelImport);
 
     // Confirm modal
     dom.confirmCancel.addEventListener('click', cancelShare);
