@@ -70,7 +70,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.38';
+  const VERSION = '1.0.39';
 
   // --------------- STATE ---------------
   let data = null;
@@ -999,7 +999,11 @@
     dom.varGrid.addEventListener(evt, () => {
       clearTimeout(longPressTimer);
       if (longPressFired) {
-        // Prevent the subsequent click from firing +1
+        // User just released after a long-press → this IS a user gesture,
+        // so iOS will raise the numpad if we focus the input right now.
+        if (dom.quickaddModal.style.display === 'flex') {
+          dom.quickaddInput.focus();
+        }
         setTimeout(() => { longPressFired = false; }, 400);
       }
     });
