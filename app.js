@@ -70,7 +70,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.39';
+  const VERSION = '1.0.40';
 
   // --------------- STATE ---------------
   let data = null;
@@ -518,6 +518,28 @@
     return '?';
   }
 
+  /** Variant code IS the price: "06" → 6, "16" → 16. Returns 0 if unparsable. */
+  function getVariantPrice(v) {
+    const label = getVariantLabel(v);
+    const n = parseInt(label, 10);
+    return isNaN(n) ? 0 : n;
+  }
+
+  /** Sum value (price × qty) for items of a given type. */
+  function getTypeValue(items, type) {
+    return items
+      .filter((i) => i.type === type)
+      .reduce((sum, i) => {
+        const v = findVariant(i.categoryId, i.variantId);
+        return sum + (v ? getVariantPrice(v) * i.quantity : 0);
+      }, 0);
+  }
+
+  /** Format value as "50 €". */
+  function formatValue(n) {
+    return `${n} €`;
+  }
+
   // --------------- HISTORY ---------------
   function renderHistory() {
     dom.histList.innerHTML = '';
@@ -538,6 +560,8 @@
       const otpisTotal = session.items
         .filter((i) => i.type === 'otpis')
         .reduce((s, i) => s + i.quantity, 0);
+      const ulazValue = formatValue(getTypeValue(session.items, 'ulaz'));
+      const otpisValue = formatValue(getTypeValue(session.items, 'otpis'));
 
       const card = document.createElement('div');
       card.className = 'card card--history';
@@ -551,7 +575,7 @@
       card.innerHTML =
         `<div class="history-summary">` +
           `<span class="history-date">${dateFormatted} ${timeFormatted} - </span>` +
-          `<span class="history-totals">ULAZ: ${ulazTotal} | OTPIS: ${otpisTotal}</span>` +
+          `<span class="history-totals">ULAZ: ${ulazTotal} (${ulazValue}) | OTPIS: ${otpisTotal} (${otpisValue})</span>` +
         `</div>` +
         `<div class="history-detail" style="display:none;"></div>`;
 
@@ -598,6 +622,19 @@
       if (lines.length > 0) lines.push('');
       lines.push('OTPIS (razbijeno/poklonjeno):');
       lines.push(...buildTypeLines(otpisItems));
+    }
+
+    // Value totals
+    const valueLines = [];
+    if (ulazItems.length > 0) {
+      valueLines.push(`ULAZ ukupno: ${formatValue(getTypeValue(items, 'ulaz'))}`);
+    }
+    if (otpisItems.length > 0) {
+      valueLines.push(`OTPIS ukupno: ${formatValue(getTypeValue(items, 'otpis'))}`);
+    }
+    if (valueLines.length > 0) {
+      if (lines.length > 0) lines.push('');
+      lines.push(...valueLines);
     }
 
     return lines.join('\n');
