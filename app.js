@@ -59,7 +59,7 @@
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.33';
+  const VERSION = '1.0.34';
 
   // --------------- STATE ---------------
   let data = null;
@@ -1090,62 +1090,60 @@
   }
 
   function importData() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.style.display = 'none';
-    document.body.appendChild(input);
-
-    input.addEventListener('change', () => {
-      const file = input.files[0];
-      if (!file) {
-        document.body.removeChild(input);
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const json = JSON.parse(e.target.result);
-
-          // Validate structure
-          if (!Array.isArray(json.categories)) {
-            throw new Error('Neispravna struktura: nedostaje "categories" niz.');
-          }
-          if (!json.currentSession || typeof json.currentSession !== 'object') {
-            throw new Error('Neispravna struktura: nedostaje "currentSession" objekt.');
-          }
-          if (typeof json.currentSession.date !== 'string' || !Array.isArray(json.currentSession.items)) {
-            throw new Error('Neispravna struktura: "currentSession" mora imati "date" i "items".');
-          }
-          if (!Array.isArray(json.history)) {
-            throw new Error('Neispravna struktura: nedostaje "history" niz.');
-          }
-
-          if (!confirm('Uvoz će zamijeniti sve postojeće podatke. Nastaviti?')) {
-            document.body.removeChild(input);
-            return;
-          }
-
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(json));
-          dom.setDataStatus.textContent = 'Podaci uvezeni. Aplikacija će se osvježiti.';
-          setTimeout(() => location.reload(), 1000);
-
-        } catch (err) {
-          alert('Greška pri uvozu: ' + err.message);
-        }
-        document.body.removeChild(input);
-      };
-
-      reader.onerror = () => {
-        alert('Greška pri čitanju datoteke.');
-        document.body.removeChild(input);
-      };
-
-      reader.readAsText(file);
-    });
-
+    const input = document.getElementById('import-file');
+    if (!input) {
+      alert('Greška: file input nije dostupan.');
+      return;
+    }
+    // Reset so selecting the same file again triggers change
+    input.value = '';
     input.click();
+  }
+
+  function handleImportChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const json = JSON.parse(ev.target.result);
+
+        // Validate structure
+        if (!Array.isArray(json.categories)) {
+          throw new Error('Neispravna struktura: nedostaje "categories" niz.');
+        }
+        if (!json.currentSession || typeof json.currentSession !== 'object') {
+          throw new Error('Neispravna struktura: nedostaje "currentSession" objekt.');
+        }
+        if (typeof json.currentSession.date !== 'string' || !Array.isArray(json.currentSession.items)) {
+          throw new Error('Neispravna struktura: "currentSession" mora imati "date" i "items".');
+        }
+        if (!Array.isArray(json.history)) {
+          throw new Error('Neispravna struktura: nedostaje "history" niz.');
+        }
+
+        // Sanitize: ensure categories have variants array, items have required fields
+        json.categories = json.categories.map(c => ({
+          id: c.id || 'cat_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9),
+          name: c.name || 'Nepoznato',
+          variants: Array.isArray(c.variants) ? c.variants.map(v => ({
+            id: v.id || 'var_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9),
+            code: v.code !== undefined ? String(v.code) : (v.price !== undefined ? String(v.price) : '?')
+          })) : []
+        }));
+
+        if (!confirm('Uvoz će zamijeniti sve postojeće podatke. Nastaviti?')) return;
+
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(json));
+        dom.setDataStatus.textContent = 'Podaci uvezeni. Aplikacija će se osvježiti.';
+        setTimeout(() => location.reload(), 1000);
+      } catch (err) {
+        alert('Greška pri uvozu: ' + err.message);
+      }
+    };
+    reader.onerror = () => alert('Greška pri čitanju datoteke.');
+    reader.readAsText(file);
   }
 
   /* ===================================================================
@@ -1261,6 +1259,9 @@
     dom.setCheckUpdate.addEventListener('click', checkForUpdate);
     dom.setExport.addEventListener('click', exportData);
     dom.setImport.addEventListener('click', importData);
+
+    // Persistent file input handler
+    document.getElementById('import-file').addEventListener('change', handleImportChange);
 
     // Confirm modal
     dom.confirmCancel.addEventListener('click', cancelShare);

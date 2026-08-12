@@ -136,7 +136,7 @@
       <h2 class="settings-section__title">Ažuriranje</h2>
       <button id="set-check-update" class="settings-btn">Provjeri ažuriranja</button>
       <p id="set-update-status" class="settings-info"></p>
-      <p class="settings-info">Verzija: v1.0.33</p>
+      <p class="settings-info">Verzija: v1.0.34</p>
     </div>
 
     <div class="settings-section">
@@ -151,6 +151,9 @@
       <p class="settings-info">Stand Tracker — Praćenje ulaza i otpisa proizvoda na štandu</p>
     </div>
   </section>
+
+  <!-- Hidden file input for import (persistent — works reliably on iOS) -->
+  <input type="file" id="import-file" accept=".json,application/json" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;" aria-hidden="true">
 
   <!-- ===== CONFIRM MODAL ===== -->
   <div id="confirm-modal" class="modal-overlay" style="display:none;">
