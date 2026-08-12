@@ -59,12 +59,18 @@
     importModalInfo:$('#import-modal-info'),
     importCancel:   $('#import-cancel'),
     importConfirm:  $('#import-confirm'),
+    // Quick-add modal
+    quickaddModal:    $('#quickadd-modal'),
+    quickaddProduct:  $('#quickadd-product'),
+    quickaddInput:    $('#quickadd-input'),
+    quickaddCancel:   $('#quickadd-cancel'),
+    quickaddConfirm:  $('#quickadd-confirm'),
     homeBtnSettings: $('#home-btn-settings'),
   };
 
   // --------------- STORAGE KEY ---------------
   const STORAGE_KEY = 'stand-tracker-data';
-  const VERSION = '1.0.36';
+  const VERSION = '1.0.37';
 
   // --------------- STATE ---------------
   let data = null;
@@ -959,11 +965,79 @@
 
   // Delegate clicks on the variant grid: counter buttons only
   dom.varGrid.addEventListener('click', (e) => {
+    // Ignore the click that follows a long-press (quick-add)
+    if (longPressFired) return;
     const btn = e.target.closest('.btn--counter-plus, .btn--counter-minus');
     if (btn) {
       handleCounterClick(e);
     }
   });
+
+  // -------- QUICK-ADD (long-press on +) --------
+  let quickAddTarget = null;
+  let longPressTimer = null;
+  let longPressFired = false;
+
+  // Long-press 1s on the + button → open numeric quick-add modal
+  dom.varGrid.addEventListener('pointerdown', (e) => {
+    const btn = e.target.closest('.btn--counter-plus');
+    if (!btn) return;
+
+    const catId = btn.dataset.categoryId;
+    const varId = btn.dataset.variantId;
+    const type = btn.dataset.type;
+
+    longPressFired = false;
+    clearTimeout(longPressTimer);
+    longPressTimer = setTimeout(() => {
+      longPressFired = true;
+      openQuickAdd(catId, varId, type);
+    }, 1000);
+  });
+
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach((evt) => {
+    dom.varGrid.addEventListener(evt, () => {
+      clearTimeout(longPressTimer);
+      if (longPressFired) {
+        // Prevent the subsequent click from firing +1
+        setTimeout(() => { longPressFired = false; }, 400);
+      }
+    });
+  });
+
+  function openQuickAdd(catId, varId, type) {
+    const cat = findCategory(catId);
+    const v = findVariant(catId, varId);
+    if (!cat || !v) return;
+
+    quickAddTarget = { catId, varId, type };
+    dom.quickaddProduct.textContent =
+      `${cat.name} ${getVariantLabel(v)} — ${type === 'ulaz' ? 'ULAZ' : 'OTPIS'}`;
+    dom.quickaddInput.value = '';
+    dom.quickaddModal.style.display = 'flex';
+    setTimeout(() => dom.quickaddInput.focus(), 100);
+  }
+
+  function confirmQuickAdd() {
+    if (!quickAddTarget) return;
+    const n = parseInt(dom.quickaddInput.value, 10);
+    dom.quickaddModal.style.display = 'none';
+
+    if (!isNaN(n) && n > 0) {
+      const { catId, varId, type } = quickAddTarget;
+      const result = updateQuantity(catId, varId, type, n);
+      if (result.netted) showToast(result.netMessage);
+      renderVariants(catId, varId);
+      updateCategoryBadge(catId, type);
+      renderHome();
+    }
+    quickAddTarget = null;
+  }
+
+  function cancelQuickAdd() {
+    dom.quickaddModal.style.display = 'none';
+    quickAddTarget = null;
+  }
 
   /* ===================================================================
    *  SHARE & RESET ("Pošalji i zaključi")
@@ -1298,6 +1372,13 @@
     // Import modal
     dom.importConfirm.addEventListener('click', confirmImport);
     dom.importCancel.addEventListener('click', cancelImport);
+
+    // Quick-add modal
+    dom.quickaddConfirm.addEventListener('click', confirmQuickAdd);
+    dom.quickaddCancel.addEventListener('click', cancelQuickAdd);
+    dom.quickaddInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') confirmQuickAdd();
+    });
 
     // Confirm modal
     dom.confirmCancel.addEventListener('click', cancelShare);
